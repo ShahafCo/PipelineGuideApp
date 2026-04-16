@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src http://127.0.0.1:*">
+    <title>Pipeline Guide</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --bg2: #161b22;
+        --bg3: #21262d;
+        --bg4: #2d333b;
+        --bd: #30363d;
+        --accent: #58a6ff;
+        --green: #3fb950;
+        --yellow: #d29922;
+        --red: #f85149;
+        --purple: #bc8cff;
+        --text: #c9d1d9;
+        --muted: #8b949e;
+        --bright: #f0f6fc;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 13px;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+      }
+
+      ::-webkit-scrollbar {
+        width: 5px
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--bd);
+        border-radius: 3px
+      }
+
+      /* ── Titlebar ── */
+      #tb {
+        height: 38px;
+        background: var(--bg2);
+        border-bottom: 1px solid var(--bd);
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        -webkit-app-region: drag;
+        flex-shrink: 0;
+        gap: 8px;
+      }
+
+      .tb-logo {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        color: var(--bright);
+        font-size: 13px;
+      }
+
+      .tb-status {
+        margin-left: 10px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+
+      .dot.on {
+        background: var(--green);
+        box-shadow: 0 0 6px var(--green);
+      }
+
+      .tb-sp {
+        flex: 1
+      }
+
+      .tb-btn {
+        -webkit-app-region: no-drag;
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background .15s, color .15s;
+      }
+
+      .tb-btn:hover {
+        background: var(--bg3);
+        color: var(--text);
+      }
+
+      .tb-btn.x:hover {
+        background: var(--red);
+        color: #fff;
+      }
+
+      /* ── Screens ── */
+      .sc {
+        display: none;
+      }
+
+      .sc.on {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      /* ── Login ── */
+      #ls {
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+      }
+
+      .card {
+        background: var(--bg2);
+        border: 1px solid var(--bd);
+        border-radius: 10px;
+        padding: 32px;
+        width: 420px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, .45);
+      }
+
+      .card-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--bright);
+        margin-bottom: 3px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .card-sub {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 22px;
+      }
+
+      .fr {
+        margin-bottom: 13px;
+      }
+
+      .fr label {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin-bottom: 5px;
+      }
+
+      .fr input,
+      .fr select {
+        width: 100%;
+        background: var(--bg3);
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        color: var(--text);
+        padding: 8px 10px;
+        font-size: 13px;
+        outline: none;
+        font-family: inherit;
+        transition: border-color .15s;
+      }
+
+      .fr input:focus,
+      .fr select:focus {
+        border-color: var(--accent);
+      }
+
+      .fr input::placeholder {
+        color: var(--muted);
+      }
+
+      .fr input[readonly] {
+        opacity: .6;
+        cursor: default;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 76px;
+        gap: 8px;
+      }
+
+      .auth-tabs,
+      .mode-tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 13px;
+      }
+
+      .atab,
+      .mtab {
+        flex: 1;
+        padding: 6px;
+        border: 1px solid var(--bd);
+        background: transparent;
+        color: var(--muted);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-family: inherit;
+        transition: all .15s;
+      }
+
+      .atab.on {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .mtab.on {
+        background: var(--purple);
+        border-color: var(--purple);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .sec-divider {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: var(--muted);
+        margin: 4px 0 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--bd);
+      }
+
+      .btn-p {
+        width: 100%;
+        padding: 10px;
+        background: var(--accent);
+        border: none;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        margin-top: 4px;
+        transition: opacity .15s;
+      }
+
+      .btn-p:hover {
+        opacity: .87
+      }
+
+      .btn-p:disabled {
+        opacity: .4;
+        cursor: not-allowed;
+      }
+
+      .btn-s {
+        padding: 7px 13px;
+        background: var(--bg3);
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 12px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all .15s;
+      }
+
+      .btn-s:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .err-box {
+        background: rgba(248, 81, 73, .1);
+        border: 1px solid rgba(248, 81, 73, .4);
+        border-radius: 6px;
+        padding: 8px 12px;
+        color: var(--red);
+        font-size: 12px;
+        margin-top: 10px;
+        display: none;
+      }
+
+      .err-box.on {
+        display: block;
+      }
+
+      /* ── App layout ── */
+      #ws {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      /* ── Sidebar ── */
+      #sb {
+        width: 238px;
+        flex-shrink: 0;
+        background: var(--bg2);
+        border-right: 1px solid var(--bd);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .sb-sec {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--bd);
+      }
+
+      .sb-sec:last-child {
+        border: none;
+      }
+
+      .sb-lbl {
+        padding: 4px 14px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: var(--muted);
+      }
+
+      .sb-item {
+        padding: 6px 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+        font-size: 12px;
+        transition: background .1s;
+      }
+
+      .sb-item:hover {
+        background: var(--bg3);
+      }
+
+      .sb-item.on {
+        background: rgba(88, 166, 255, .12);
+        color: var(--accent);
+      }
+
+      .badge {
+        margin-left: auto;
+        font-size: 10px;
+        background: var(--bg4);
+        color: var(--muted);
+        padding: 1px 6px;
+        border-radius: 10px;
+      }
+
+      .sb-item.on .badge {
+        background: rgba(88, 166, 255, .2);
+        color: var(--accent);
+      }
+
+      #sb-foot {
+        padding: 10px 12px;
+        border-top: 1px solid var(--bd);
+        margin-top: auto;
+      }
+
+      .ci {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        overflow: hidden;
+      }
+
+      .ci span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .disc {
+        width: 100%;
+        padding: 6px;
+        background: rgba(248, 81, 73, .1);
+        border: 1px solid rgba(248, 81, 73, .3);
+        border-radius: 5px;
+        color: var(--red);
+        font-size: 11px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all .15s;
+      }
+
+      .disc:hover {
+        background: rgba(248, 81, 73, .2);
+      }
+
+      /* ── Main ── */
+      #main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: var(--bg);
+      }
+
+      #toolbar {
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--bd);
+        background: var(--bg2);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
+      .sw {
+        flex: 1;
+        position: relative;
+        max-width: 380px;
+      }
+
+      .sw svg {
+        position: absolute;
+        left: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        pointer-events: none;
+      }
+
+      #si {
+        width: 100%;
+        background: var(--bg3);
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        color: var(--text);
+        padding: 6px 10px 6px 30px;
+        font-size: 12px;
+        outline: none;
+        font-family: inherit;
+        transition: border-color .15s;
+      }
+
+      #si:focus {
+        border-color: var(--accent);
+      }
+
+      #si::placeholder {
+        color: var(--muted);
+      }
+
+      .fsel {
+        background: var(--bg3);
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        color: var(--text);
+        padding: 6px 10px;
+        font-size: 12px;
+        outline: none;
+        font-family: inherit;
+        cursor: pointer;
+      }
+
+      .tb-sp2 {
+        flex: 1;
+      }
+
+      .rbtn {
+        padding: 6px 12px;
+        background: var(--bg3);
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 12px;
+        cursor: pointer;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all .15s;
+      }
+
+      .rbtn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .rbtn.spin svg {
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ── Content ── */
+      #ct {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .gv {
+        padding: 20px;
+      }
+
+      .gv-hd {
+        margin-bottom: 14px;
+      }
+
+      .gv-hd h2 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--bright);
+        margin-bottom: 3px;
+      }
+
+      .gv-hd p {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .gg {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+        gap: 11px;
+      }
+
+      .gc {
+        background: var(--bg2);
+        border: 1px solid var(--bd);
+        border-radius: 8px;
+        padding: 14px;
+        cursor: pointer;
+        transition: border-color .15s, transform .1s;
+      }
+
+      .gc:hover {
+        border-color: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      .gc-h {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 7px;
+      }
+
+      .gc-ico {
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+
+      .gc-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--bright);
+        line-height: 1.3;
+      }
+
+      .gc-cat {
+        font-size: 11px;
+        color: var(--accent);
+        margin-top: 2px;
+      }
+
+      .gc-desc {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+        margin-bottom: 9px;
+      }
+
+      .gc-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .tag {
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        background: var(--bg3);
+        color: var(--muted);
+        border: 1px solid var(--bd);
+      }
+
+      .tag.ac {
+        background: rgba(88, 166, 255, .1);
+        color: var(--accent);
+        border-color: rgba(88, 166, 255, .3);
+      }
+
+      .es {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        color: var(--muted);
+        gap: 10px;
+        text-align: center;
+      }
+
+      .es-i {
+        font-size: 40px;
+        opacity: .35;
+      }
+
+      .es h3 {
+        font-size: 14px;
+        color: var(--text);
+      }
+
+      .es p {
+        font-size: 12px;
+        max-width: 280px;
+        line-height: 1.5;
+      }
+
+      .spin2 {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--bd);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin .7s linear infinite;
+      }
+
+      /* ── Guide Viewer ── */
+      .gview {
+        padding: 24px 28px;
+        max-width: 880px;
+      }
+
+      .gnav {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 18px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .gnav a {
+        color: var(--accent);
+        cursor: pointer;
+      }
+
+      .gnav a:hover {
+        text-decoration: underline;
+      }
+
+      .gview h1 {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--bright);
+        margin-bottom: 8px;
+      }
+
+      .gmeta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+
+      .act-bar {
+        display: flex;
+        gap: 7px;
+        margin-bottom: 16px;
+      }
+
+      .pbar-w {
+        margin: 14px 0;
+      }
+
+      .pbar-l {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 4px;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .pbar {
+        height: 4px;
+        background: var(--bg3);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .pfill {
+        height: 100%;
+        background: var(--green);
+        border-radius: 2px;
+        transition: width .3s;
+      }
+
+      .steps-lbl {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--muted);
+        margin: 16px 0 10px;
+      }
+
+      .step {
+        border: 1px solid var(--bd);
+        border-radius: 8px;
+        margin-bottom: 9px;
+        overflow: hidden;
+        transition: border-color .15s;
+      }
+
+      .step.done {
+        border-color: rgba(63, 185, 80, .3);
+        background: rgba(63, 185, 80, .03);
+      }
+
+      .step.open {
+        border-color: var(--accent);
+      }
+
+      .step-hd {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 14px;
+        cursor: pointer;
+        background: var(--bg2);
+        transition: background .1s;
+      }
+
+      .step-hd:hover {
+        background: var(--bg3);
+      }
+
+      .chk {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid var(--bd);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        transition: all .2s;
+        cursor: pointer;
+      }
+
+      .chk:hover {
+        border-color: var(--accent);
+      }
+
+      .step.done .chk {
+        background: var(--green);
+        border-color: var(--green);
+        color: #fff;
+        font-size: 12px;
+      }
+
+      .snum {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+
+      .stitle {
+        flex: 1;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--bright);
+      }
+
+      .step.done .stitle {
+        color: var(--muted);
+        text-decoration: line-through;
+      }
+
+      .sarr {
+        color: var(--muted);
+        font-size: 10px;
+        transition: transform .2s;
+      }
+
+      .step.open .sarr {
+        transform: rotate(90deg);
+      }
+
+      .sbody {
+        display: none;
+        padding: 14px 16px 14px 46px;
+        border-top: 1px solid var(--bd);
+      }
+
+      .step.open .sbody {
+        display: block;
+      }
+
+      /* ── Markdown ── */
+      .md h1,
+      .md h2,
+      .md h3 {
+        color: var(--bright);
+        font-weight: 600;
+        margin: 14px 0 7px;
+      }
+
+      .md h1 {
+        font-size: 20px;
+      }
+
+      .md h2 {
+        font-size: 16px;
+      }
+
+      .md h3 {
+        font-size: 14px;
+      }
+
+      .md p {
+        margin-bottom: 9px;
+        line-height: 1.65;
+      }
+
+      .md code {
+        font-family: 'SFMono-Regular', Consolas, monospace;
+        font-size: 12px;
+        background: var(--bg3);
+        border: 1px solid var(--bd);
+        border-radius: 4px;
+        padding: 1px 5px;
+        color: var(--purple);
+      }
+
+      .md pre {
+        background: var(--bg2);
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        padding: 12px 14px;
+        overflow-x: auto;
+        margin: 9px 0;
+      }
+
+      .md pre code {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--green);
+      }
+
+      .md ul,
+      .md ol {
+        padding-left: 20px;
+        margin-bottom: 9px;
+      }
+
+      .md li {
+        margin-bottom: 4px;
+        line-height: 1.55;
+      }
+
+      .md blockquote {
+        border-left: 3px solid var(--accent);
+        padding: 6px 14px;
+        margin: 9px 0;
+        color: var(--muted);
+        background: rgba(88, 166, 255, .06);
+        border-radius: 0 6px 6px 0;
+      }
+
+      .md a {
+        color: var(--accent);
+      }
+
+      .md table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 9px 0;
+        font-size: 12px;
+      }
+
+      .md th,
+      .md td {
+        border: 1px solid var(--bd);
+        padding: 6px 11px;
+        text-align: left;
+      }
+
+      .md th {
+        background: var(--bg2);
+        color: var(--bright);
+        font-weight: 600;
+      }
+
+      .md tr:hover td {
+        background: var(--bg3);
+      }
+
+      .md hr {
+        border: none;
+        border-top: 1px solid var(--bd);
+        margin: 14px 0;
+      }
+
+      .md img {
+        max-width: 100%;
+        border-radius: 6px;
+        border: 1px solid var(--bd);
+        margin: 10px 0;
+        display: block;
+      }
+
+      .img-warn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: var(--yellow);
+        padding: 5px 10px;
+        background: rgba(210, 153, 34, .08);
+        border: 1px solid rgba(210, 153, 34, .25);
+        border-radius: 6px;
+        margin: 4px 0;
+      }
+
+      /* ── Log Panel ── */
+      #lp {
+        border-top: 1px solid var(--bd);
+        background: var(--bg2);
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        height: 175px;
+        transition: height .2s;
+      }
+
+      #lp.col {
+        height: 32px;
+      }
+
+      #lp.col #lo {
+        display: none;
+      }
+
+      #lh {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 12px;
+        height: 32px;
+        border-bottom: 1px solid var(--bd);
+        flex-shrink: 0;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .ldot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+
+      .ldot.live {
+        background: var(--green);
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+
+        0%,
+        100% {
+          opacity: 1
+        }
+
+        50% {
+          opacity: .35
+        }
+      }
+
+      .ltitle {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--muted);
+      }
+
+      .lsp {
+        flex: 1;
+      }
+
+      .lbtn {
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 3px;
+        display: flex;
+        align-items: center;
+        border-radius: 3px;
+      }
+
+      .lbtn:hover {
+        background: var(--bg3);
+        color: var(--text);
+      }
+
+      #lo {
+        flex: 1;
+        overflow-y: auto;
+        padding: 7px 12px;
+        font-family: 'SFMono-Regular', Consolas, monospace;
+        font-size: 11.5px;
+        line-height: 1.5;
+      }
+
+      .ll {
+        display: flex;
+        gap: 8px;
+      }
+
+      .lt {
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+
+      .lx {
+        word-break: break-all;
+      }
+
+      .lx.e {
+        color: var(--red);
+      }
+
+      .lx.s {
+        color: var(--accent);
+        font-style: italic;
+      }
+
+      /* ── Guide Editor Modal ── */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .72);
+        z-index: 100;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal {
+        background: var(--bg2);
+        border: 1px solid var(--bd);
+        border-radius: 10px;
+        width: 720px;
+        max-width: 95vw;
+        max-height: 88vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, .6);
+      }
+
+      .modal-hd {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--bd);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+
+      .modal-hd h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--bright);
+        margin: 0;
+      }
+
+      .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .modal-ft {
+        padding: 12px 16px;
+        border-top: 1px solid var(--bd);
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .ed {
+        width: 100%;
+        flex: 1;
+        min-height: 320px;
+        background: var(--bg3);
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        color: var(--text);
+        padding: 10px 12px;
+        font-family: 'SFMono-Regular', Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        resize: none;
+        outline: none;
+        transition: border-color .15s;
+      }
+
+      .ed:focus {
+        border-color: var(--accent);
+      }
+
+      .btn-danger {
+        padding: 6px 12px;
+        background: rgba(248, 81, 73, .1);
+        border: 1px solid rgba(248, 81, 73, .3);
+        border-radius: 6px;
+        color: var(--red);
+        font-size: 12px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all .15s;
+      }
+
+      .btn-danger:hover {
+        background: rgba(248, 81, 73, .2);
+      }
+
+      .api-badge {
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        background: rgba(188, 140, 255, .1);
+        color: var(--purple);
+        border: 1px solid rgba(188, 140, 255, .3);
+        margin-left: 6px;
+      }
+
+      .icon-pick {
+        position: absolute;
+        top: 58px;
+        left: 0;
+        z-index: 200;
+        background: var(--bg2);
+        border: 1px solid var(--bd);
+        border-radius: 8px;
+        padding: 6px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, .5);
+        display: none;
+      }
+
+      .icon-pick-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+      }
+
+      .icon-pick button {
+        font-size: 17px;
+        width: 30px;
+        height: 30px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 4px;
+        line-height: 1;
+      }
+
+      .icon-pick button:hover {
+        background: var(--bg3);
+      }
+
+      /* ── RTL ── */
+      html[dir="rtl"] code,
+      html[dir="rtl"] pre,
+      html[dir="rtl"] .md pre {
+        direction: ltr;
+        unicode-bidi: embed;
+      }
+
+      .rbtn.on {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(88, 166, 255, .08);
+      }
+
+      /* ── Tag dropdown ── */
+      .tag-dd {
+        position: relative;
+      }
+
+      .tag-dd-list {
+        position: absolute;
+        top: calc(100% + 3px);
+        left: 0;
+        min-width: 160px;
+        max-height: 200px;
+        overflow-y: auto;
+        background: var(--bg2);
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        z-index: 50;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .45);
+        display: none;
+      }
+
+      .tag-dd-item {
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 12px;
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      .tag-dd-item:hover {
+        background: var(--bg3);
+      }
+
+      .tag-dd-item.on {
+        color: var(--accent);
+      }
+
+      /* ── Subcategory sidebar ── */
+      .sb-sub {
+        padding: 5px 14px 5px 30px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 11px;
+        transition: background .1s;
+      }
+
+      .sb-sub:hover {
+        background: var(--bg3);
+        color: var(--text);
+      }
+
+      .sb-sub.on {
+        background: rgba(88, 166, 255, .1);
+        color: var(--accent);
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <!-- TITLEBAR -->
+    <div id="tb">
+      <div class="tb-logo">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+        </svg>
+        Pipeline Guide
+      </div>
+      <div class="tb-status">
+        <div class="dot" id="cd"></div><span id="cl">Disconnected</span>
+      </div>
+      <div class="tb-sp"></div>
+      <button class="tb-btn" onclick="api.minimize()" title="Minimize">
+        <svg width="12" height="2" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 12 2">
+          <line x1="0" y1="1" x2="12" y2="1" />
+        </svg>
+      </button>
+      <button class="tb-btn" onclick="api.maximize()" title="Maximize">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 11 11">
+          <rect x=".5" y=".5" width="10" height="10" rx="2" />
+        </svg>
+      </button>
+      <button class="tb-btn x" onclick="api.close()" title="Close">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 11 11">
+          <line x1="1" y1="1" x2="10" y2="10" />
+          <line x1="10" y1="1" x2="1" y2="10" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="ls" class="sc on">
+      <div class="card">
+        <div class="card-title">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Connect to Guide Server
+        </div>
+        <div class="card-sub">SSH into your server to access guides, runbooks, and workflow documentation</div>
+
+        <div class="fr">
+          <label>Host &amp; Port</label>
+          <div class="split">
+            <input type="text" id="fh" placeholder="hostname or IP" autocomplete="off">
+            <input type="number" id="fp" value="22" placeholder="22">
+          </div>
+        </div>
+        <div class="fr"><label>Username</label><input type="text" id="fu" placeholder="admin" autocomplete="off"></div>
+
+        <div class="auth-tabs">
+          <button class="atab on" onclick="authMode('pw')" id="tpw">Password</button>
+          <button class="atab" onclick="authMode('key')" id="tkey">Private Key</button>
+        </div>
+        <div id="apw">
+          <div class="fr"><label>Password</label><input type="password" id="fpass" placeholder="••••••••"></div>
+        </div>
+        <div id="akey" style="display:none">
+          <div class="fr">
+            <label>Key File</label>
+            <div style="display:flex;gap:6px">
+              <input type="text" id="fkp" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="pickKey()">
+              <button class="btn-s" onclick="pickKey()">Browse</button>
+            </div>
+          </div>
+          <div class="fr"><label>Passphrase (optional)</label><input type="password" id="fpp" placeholder="Leave blank if none"></div>
+        </div>
+
+        <div class="sec-divider">Connection Mode</div>
+        <div class="mode-tabs">
+          <button class="mtab on" onclick="setConnMode('ssh')" id="mssh">SSH Only</button>
+          <button class="mtab" onclick="setConnMode('api')" id="mapi">API Server</button>
+        </div>
+        <div id="aapi" style="display:none">
+          <div class="fr"><label>Guide Password</label><input type="password" id="fapi-pass" placeholder="••••••••" autocomplete="off"></div>
+          <div class="fr">
+            <label>Server Port</label>
+            <input type="number" id="fapiport" value="7842" placeholder="7842">
+          </div>
+        </div>
+
+        <div class="fr" id="fdir-row">
+          <label>Guides Directory (on server)</label>
+          <input type="text" id="fdir" value="~/guides" placeholder="~/guides">
+        </div>
+
+        <div id="lerr" class="err-box"></div>
+        <button class="btn-p" id="cbtn" onclick="doConnect()">Connect</button>
+      </div>
+    </div>
+
+    <!-- APP -->
+    <div id="as" class="sc">
+      <div id="ws">
+        <div id="sb">
+          <div class="sb-sec">
+            <div class="sb-lbl">Browse</div>
+            <div class="sb-item on" id="nall" onclick="setView('all')">📋 All Guides<span class="badge" id="ball">0</span></div>
+            <div class="sb-item" id="nrec" onclick="setView('recent')">🕐 Recently Viewed</div>
+          </div>
+          <div class="sb-sec" style="flex:1;overflow-y:auto">
+            <div class="sb-lbl">Categories</div>
+            <div id="cats"></div>
+          </div>
+          <div id="sb-foot">
+            <div class="ci">🔒 <span id="cinfo">—</span></div>
+            <button class="disc" onclick="doDisconnect()">⏏ Disconnect</button>
+          </div>
+        </div>
+
+        <div id="main">
+          <div id="toolbar">
+            <div class="sw">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input type="text" id="si" placeholder="Search guides, runbooks, keywords… (Ctrl+F)" oninput="onSearch(this.value)">
+            </div>
+            <div class="tag-dd" id="tag-dd">
+              <button class="fsel" id="tag-dd-btn" onclick="togTagDd(event)">All Tags ▾</button>
+              <div class="tag-dd-list" id="tag-dd-list"></div>
+            </div>
+            <div class="tb-sp2"></div>
+            <button class="rbtn" id="rtl-btn" onclick="togRTL()" title="Toggle RTL/LTR">RTL</button>
+            <button class="rbtn" id="ngb" style="display:none" onclick="openEditor('create')" title="New Guide">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              New Guide
+            </button>
+            <button class="rbtn" id="rb" onclick="loadGuides()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M23 4v6h-6M1 20v-6h6" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
+              Refresh
+            </button>
+          </div>
+          <div id="ct"></div>
+        </div>
+      </div>
+
+      <div id="lp">
+        <div id="lh" onclick="togLog()">
+          <div class="ldot" id="ldot"></div>
+          <span class="ltitle">Output Log</span>
+          <div class="lsp"></div>
+          <button class="lbtn" onclick="clrLog(event)" title="Clear log">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14H6L5 6" />
+              <path d="M10 11v6M14 11v6M9 6V4h6v2" />
+            </svg>
+          </button>
+          <button class="lbtn" title="Toggle">
+            <svg id="ltogico" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <polyline points="18 15 12 9 6 15" />
+            </svg>
+          </button>
+        </div>
+        <div id="lo"></div>
+      </div>
+    </div>
+
+    <!-- GUIDE EDITOR MODAL -->
+    <div class="overlay" id="ed-overlay" onclick="overlayClick(event)">
+      <div class="modal">
+        <div class="modal-hd">
+          <h3 id="em-title">New Guide</h3>
+          <button class="tb-btn" onclick="closeEditor()" title="Close">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 11 11">
+              <line x1="1" y1="1" x2="10" y2="10" />
+              <line x1="10" y1="1" x2="1" y2="10" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="fr" style="margin:0">
+            <label>Path (relative to guides dir)</label>
+            <input type="text" id="em-path" placeholder="category/sub-folder/guide.md" autocomplete="off">
+          </div>
+          <div class="fr" style="margin:0; position:relative">
+            <label>Icon</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="btn-s" id="em-icon-btn" onclick="toggleIconPicker(event)"
+                style="font-size:20px;width:38px;height:34px;padding:0;text-align:center">📄</button>
+              <span style="font-size:11px;color:var(--muted)">Stored in frontmatter — click to change</span>
+            </div>
+            <div class="icon-pick" id="em-icon-picker">
+              <div class="icon-pick-grid" id="em-icon-grid"></div>
+            </div>
+          </div>
+          <textarea class="ed" id="em-content" placeholder="# Guide Title&#10;&#10;## Step 1: ...&#10;&#10;Description here."></textarea>
+        </div>
+        <div class="modal-ft">
+          <button class="btn-s" id="em-img" onclick="insertImage()" title="Upload an image and insert markdown reference">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+              style="display:inline;vertical-align:middle;margin-right:4px">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+            Insert Image
+          </button>
+          <div style="flex:1"></div>
+          <button class="btn-s" onclick="closeEditor()">Cancel</button>
+          <button class="btn-p" id="em-save" onclick="saveGuide()" style="width:auto;padding:8px 20px">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const S = {
+        host: '', user: '', dir: '~/guides',
+        authMode: 'pw', connMode: 'ssh',
+        apiToken: '', localPort: null, userRole: null, apiUser: null,
+        pkey: null,
+        guides: [], recent: [], cur: null, done: new Set(),
+        view: 'all', cat: null, subcat: null, q: '', tag: '', logCol: false, rtl: false
+      };
+
+      // ── Login helpers ──────────────────────────────────────────────────────────────
+      function authMode(m) {
+        S.authMode = m;
+        document.getElementById('apw').style.display = m === 'pw' ? '' : 'none';
+        document.getElementById('akey').style.display = m === 'key' ? '' : 'none';
+        document.getElementById('tpw').classList.toggle('on', m === 'pw');
+        document.getElementById('tkey').classList.toggle('on', m === 'key');
+      }
+
+      function setConnMode(m) {
+        S.connMode = m;
+        document.getElementById('aapi').style.display = m === 'api' ? '' : 'none';
+        document.getElementById('fdir-row').style.display = m === 'api' ? 'none' : '';
+        document.getElementById('mssh').classList.toggle('on', m === 'ssh');
+        document.getElementById('mapi').classList.toggle('on', m === 'api');
+      }
+
+      async function pickKey() {
+        const k = await api.readKey();
+        if (k) { S.pkey = k; document.getElementById('fkp').value = '✓ Key loaded'; }
+      }
+
+      async function doConnect() {
+        const host = v('fh'), port = +v('fp') || 22, user = v('fu');
+        if (!host || !user) return showErr('Host and username are required.');
+
+        const cfg = { host, port, username: user };
+        if (S.authMode === 'pw') cfg.password = v('fpass');
+        else {
+          if (!S.pkey) return showErr('Please select a private key file.');
+          cfg.privateKey = S.pkey;
+          const pp = v('fpp'); if (pp) cfg.passphrase = pp;
+        }
+
+        btnState(true);
+        const r = await api.connect(cfg);
+        if (!r.ok) { btnState(false); return showErr(r.error || 'Connection failed'); }
+
+        if (S.connMode === 'api') {
+          const apiUser = user;
+          const apiPass = document.getElementById('fapi-pass').value;
+          const apiPort = +v('fapiport') || 7842;
+          if (!apiPass) { btnState(false); return showErr('Guide password is required in API mode.'); }
+
+          const t = await api.tunnelOpen(apiPort);
+          if (!t.ok) { await api.disconnect(); btnState(false); return showErr('SSH tunnel failed: ' + (t.error || 'unknown')); }
+          S.localPort = t.port;
+
+          try {
+            const lr = await fetch(`http://127.0.0.1:${t.port}/api/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: apiUser, password: apiPass })
+            });
+            const ld = await lr.json();
+            if (!lr.ok) throw new Error(ld.error || 'Login failed');
+            S.apiToken = ld.token; S.userRole = ld.role; S.apiUser = ld.username;
+            addLog(`Signed in as ${ld.username} (${ld.role})`, 's');
+          } catch (err) {
+            await api.tunnelClose(); await api.disconnect();
+            S.localPort = null; btnState(false);
+            return showErr('Login failed: ' + err.message);
+          }
+
+          let serverDir = '~/guides';
+          try {
+            const h = await apiCall('GET', '/api/health');
+            serverDir = h.dir || serverDir;
+            addLog(`API server ready on tunnel port ${t.port}`, 's');
+          } catch {
+            await api.tunnelClose(); await api.disconnect();
+            S.localPort = null; btnState(false);
+            return showErr('Guide server not responding. Is it running on the remote?');
+          }
+          S.dir = serverDir;
+        } else {
+          S.dir = v('fdir') || '~/guides';
+        }
+
+        S.host = host; S.user = user;
+        btnState(false);
+        goApp(S.apiUser);
+        await loadGuides();
+      }
+
+      function btnState(busy) {
+        const b = document.getElementById('cbtn');
+        b.disabled = busy; b.textContent = busy ? 'Connecting…' : 'Connect';
+      }
+      function showErr(m) {
+        const e = document.getElementById('lerr');
+        e.textContent = '⚠ ' + m; e.classList.add('on');
+      }
+
+      function goApp(apiUser) {
+        document.getElementById('ls').classList.remove('on');
+        document.getElementById('as').classList.add('on');
+        document.getElementById('cd').classList.add('on');
+        const displayUser = apiUser || S.user;
+        const label = S.connMode === 'api'
+          ? `${displayUser}@${S.host} (${S.userRole})`
+          : `${S.user}@${S.host}`;
+        document.getElementById('cl').textContent = label;
+        document.getElementById('cinfo').textContent = label;
+        document.getElementById('ngb').style.display = (S.connMode === 'api' && S.userRole === 'admin') ? '' : 'none';
+        api.onData(d => addLog(d));
+        api.onDone(() => document.getElementById('ldot').classList.remove('live'));
+      }
+
+      async function doDisconnect() {
+        if (S.connMode === 'api' && S.localPort) {
+          if (S.apiToken) try { await apiCall('POST', '/api/logout', {}); } catch { }
+          await api.tunnelClose();
+        }
+        await api.disconnect(); api.offAll();
+        S.guides = []; S.cur = null; S.recent = []; S.localPort = null; S.userRole = null; S.apiUser = null;
+        document.getElementById('as').classList.remove('on');
+        document.getElementById('ls').classList.add('on');
+        document.getElementById('cd').classList.remove('on');
+        document.getElementById('cl').textContent = 'Disconnected';
+        document.getElementById('lerr').classList.remove('on');
+        btnState(false);
+      }
+
+      // ── API helper ─────────────────────────────────────────────────────────────────
+      async function apiCall(method, endpoint, body) {
+        const opts = {
+          method,
+          headers: { 'Authorization': `Bearer ${S.apiToken}`, 'Content-Type': 'application/json' }
+        };
+        if (body !== undefined) opts.body = JSON.stringify(body);
+        const r = await fetch(`http://127.0.0.1:${S.localPort}${endpoint}`, opts);
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        return data;
+      }
+
+      // ── Load guides ────────────────────────────────────────────────────────────────
+      async function loadGuides() {
+        const rb = document.getElementById('rb'); rb.classList.add('spin');
+        setC(ldg('Scanning server for guides…'));
+
+        if (S.connMode === 'api') {
+          try {
+            const { guides } = await apiCall('GET', '/api/guides');
+            rb.classList.remove('spin');
+            S.guides = guides.map(g => ({ ...g, icon: g.frontmatter?.icon || catIcon(g.cat) }));
+            buildSidebar(); buildTags(); setView(S.view);
+            addLog(`Loaded ${S.guides.length} guide(s)`, 's');
+          } catch (err) {
+            rb.classList.remove('spin');
+            setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>Load failed</h3><p>${esc(err.message)}</p></div></div>`);
+            addLog(err.message, 'e');
+          }
+          return;
+        }
+
+        // SSH mode
+        const r = await api.exec(`find ${S.dir} -name "*.md" -type f 2>/dev/null | sort`);
+        rb.classList.remove('spin');
+        if (r.stderr?.includes('No such file')) { await makeSamples(); return loadGuides(); }
+        const paths = (r.stdout || '').trim().split('\n').filter(Boolean);
+        S.guides = [];
+        for (const p of paths) { const m = await getMeta(p); if (m) S.guides.push(m); }
+        buildSidebar(); buildTags(); setView(S.view);
+        addLog(`Loaded ${S.guides.length} guide(s) from ${S.dir}`, 's');
+      }
+
+      async function getMeta(path) {
+        const r = await api.exec(`head -35 "${path}" 2>/dev/null`);
+        if (!r.ok) return null;
+        const lines = r.stdout.split('\n');
+        let fm = {}, inFm = false;
+        for (let i = 0; i < lines.length; i++) {
+          const l = lines[i];
+          if (i === 0 && l === '---') { inFm = true; continue; }
+          if (inFm && l === '---') { inFm = false; continue; }
+          if (inFm) { const [k, ...vs] = l.split(':'); fm[k.trim()] = vs.join(':').trim().replace(/^['"]|['"]$/g, ''); continue; }
+        }
+        let title = fm.title || '';
+        const tags = (fm.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+        let desc = fm.description || '';
+        if (!title) { const h1 = lines.find(l => l.startsWith('# ')); title = h1 ? h1.slice(2) : path.split('/').pop().replace('.md', '').replace(/-/g, ' '); }
+        if (!desc) { const p = lines.find(l => l && !l.startsWith('#') && !l.startsWith('-') && !l.startsWith('---') && l.trim()); desc = p ? p.slice(0, 110) + (p.length > 110 ? '…' : '') : ''; }
+        const parts = path.replace(S.dir + '/', '').split('/');
+        const cat = parts.length > 1 ? parts[0] : 'general';
+        const icon = fm.icon || catIcon(cat);
+        const subcat = parts.length > 2 ? parts[1] : null;
+        return { path, title, cat, subcat, tags, desc, icon };
+      }
+
+      async function makeSamples() {
+        const d = S.dir;
+        const write = async (p, c) => {
+          const b64 = btoa(unescape(encodeURIComponent(c)));
+          await api.exec(`mkdir -p "$(dirname '${p}')" && printf '%s' '${b64}' | base64 -d > '${p}'`);
+        };
+        await write(`${d}/ci-cd/jenkins-pipeline/guide.md`,
+          `---\ntitle: Jenkins Pipeline Troubleshooting\ntags: jenkins, ci, build\ndescription: Diagnose and fix common Jenkins pipeline failures\n---\n\n# Jenkins Pipeline Troubleshooting\n\n## Step 1: Check Console Logs\n\nNavigate to the failed build and open Console Output.\n\n\`\`\`bash\njenkins-cli console <job-name> <build-number>\n\`\`\`\n\nLook for **ERROR**, **FAILED**, or timeout messages.\n\n## Step 2: Verify Agent Availability\n\nCheck agents are online and have disk/memory headroom.\n\n## Step 3: Check Plugin Versions\n\nGo to **Manage Jenkins → Plugin Manager** and look for warnings.\n\n## Step 4: Replay the Pipeline\n\nUse the **Replay** button to tweak Jenkinsfile without committing.\n\n## Step 5: Escalate\n\nIf unresolved, share the build URL and log excerpt with the DevOps team.\n`);
+        await write(`${d}/runbooks/service-down/guide.md`,
+          `---\ntitle: Service Down Runbook\ntags: incident, on-call, runbook\ndescription: Immediate steps when a production service goes down\n---\n\n# Service Down Runbook\n\n## Step 1: Confirm the Outage\n\n\`\`\`bash\ncurl -I https://your-service/health\n\`\`\`\n\n## Step 2: Notify the Team\n\nPost in **#incidents** with: service name, first seen time, user impact.\n\n## Step 3: Check Recent Deployments\n\nReview deploys in the last 30 minutes.\n\n## Step 4: Inspect Resources\n\n\`\`\`bash\nkubectl top pods -n production\n\`\`\`\n\n## Step 5: Rollback if Needed\n\n\`\`\`bash\nkubectl rollout undo deployment/<service-name> -n production\n\`\`\`\n\n## Step 6: Post-Incident Review\n\nSchedule a blameless postmortem within 48 hours.\n`);
+        await write(`${d}/troubleshooting/db-connection/guide.md`,
+          `---\ntitle: Database Connection Failures\ntags: database, postgres, troubleshooting\ndescription: Steps to diagnose why the app cannot connect to the database\n---\n\n# Database Connection Failures\n\n## Step 1: Verify DB is Running\n\n\`\`\`bash\nsystemctl status postgresql\n\`\`\`\n\n## Step 2: Test Connectivity\n\n\`\`\`bash\npsql -h <host> -U <user> -d <db> -c "SELECT 1"\n\`\`\`\n\n## Step 3: Check Connection Limits\n\n\`\`\`sql\nSELECT count(*) FROM pg_stat_activity;\nSHOW max_connections;\n\`\`\`\n\n## Step 4: Review App Config\n\nConfirm DATABASE_URL, DB_HOST, DB_PORT are correct.\n\n## Step 5: Check Firewall\n\nEnsure port 5432 is open between app servers and DB.\n`);
+      }
+
+      // ── Sidebar ────────────────────────────────────────────────────────────────────
+      function catIcon(cat) {
+        const icos = { 'ci-cd': '⚙️', 'runbooks': '📖', 'troubleshooting': '🔧', 'data': '📊', 'infrastructure': '🏗️', 'security': '🔐', 'general': '📄' };
+        return icos[cat.toLowerCase()] || Object.entries(icos).find(([k]) => cat.toLowerCase().includes(k))?.[1] || '📄';
+      }
+
+      function buildSidebar() {
+        const tree = {};
+        S.guides.forEach(g => {
+          if (!tree[g.cat]) tree[g.cat] = { count: 0, subcats: {} };
+          tree[g.cat].count++;
+          if (g.subcat) tree[g.cat].subcats[g.subcat] = (tree[g.cat].subcats[g.subcat] || 0) + 1;
+        });
+        document.getElementById('ball').textContent = S.guides.length;
+        const el = document.getElementById('cats'); el.innerHTML = '';
+        for (const [c, { count, subcats }] of Object.entries(tree)) {
+          const d = document.createElement('div');
+          d.className = 'sb-item'; d.id = 'nc-' + c;
+          d.innerHTML = `${catIcon(c)} ${cap(c)}<span class="badge">${count}</span>`;
+          d.onclick = () => setView('category', c);
+          el.appendChild(d);
+          for (const [sub, n] of Object.entries(subcats)) {
+            const sd = document.createElement('div');
+            sd.className = 'sb-sub'; sd.id = `nc-${c}::${sub}`;
+            sd.innerHTML = `📁 ${cap(sub)}<span class="badge">${n}</span>`;
+            sd.onclick = () => setView('subcat', c, sub);
+            el.appendChild(sd);
+          }
+        }
+      }
+      function buildTags() {
+        const tags = new Set(); S.guides.forEach(g => g.tags.forEach(t => tags.add(t)));
+        const list = document.getElementById('tag-dd-list'); list.innerHTML = '';
+        [['', 'All Tags'], ...[...tags].sort().map(t => [t, t])].forEach(([val, label]) => {
+          const d = document.createElement('div');
+          d.className = 'tag-dd-item' + (S.tag === val ? ' on' : '');
+          d.textContent = label;
+          d.onclick = () => selectTag(val, label);
+          list.appendChild(d);
+        });
+      }
+      function togTagDd(e) {
+        e.stopPropagation();
+        const list = document.getElementById('tag-dd-list');
+        if (list.style.display === 'block') { list.style.display = 'none'; return; }
+        list.style.display = 'block';
+        setTimeout(() => document.addEventListener('click', () => { list.style.display = 'none'; }, { once: true }), 0);
+      }
+      function selectTag(val, label) {
+        S.tag = val;
+        document.getElementById('tag-dd-btn').textContent = label + ' ▾';
+        document.getElementById('tag-dd-list').style.display = 'none';
+        document.querySelectorAll('.tag-dd-item').forEach(d => d.classList.toggle('on', d.textContent === label));
+        if (S.view !== 'guide') renderGrid();
+      }
+
+      // ── Views ──────────────────────────────────────────────────────────────────────
+      function setView(view, cat = null, subcat = null) {
+        S.view = view; S.cat = cat; S.subcat = subcat;
+        document.querySelectorAll('.sb-item, .sb-sub').forEach(e => e.classList.remove('on'));
+        if (view === 'all') document.getElementById('nall')?.classList.add('on');
+        else if (view === 'recent') document.getElementById('nrec')?.classList.add('on');
+        else if (view === 'category') document.getElementById('nc-' + cat)?.classList.add('on');
+        else if (view === 'subcat') document.getElementById(`nc-${cat}::${subcat}`)?.classList.add('on');
+        view === 'guide' ? renderViewer() : renderGrid();
+      }
+
+      function filtered() {
+        let gs = [...S.guides];
+        if (S.view === 'recent') gs = S.recent.map(p => gs.find(g => g.path === p)).filter(Boolean);
+        else if (S.view === 'subcat' && S.cat) gs = gs.filter(g => g.cat === S.cat && g.subcat === S.subcat);
+        else if (S.view === 'category' && S.cat) gs = gs.filter(g => g.cat === S.cat);
+        if (S.q) { const q = S.q.toLowerCase(); gs = gs.filter(g => g.title.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q) || g.tags.some(t => t.includes(q)) || g.cat.includes(q)); }
+        if (S.tag) gs = gs.filter(g => g.tags.includes(S.tag));
+        return gs;
+      }
+
+      function renderGrid() {
+        const gs = filtered();
+        const title = S.view === 'all' ? 'All Guides' : S.view === 'recent' ? 'Recently Viewed' : S.view === 'subcat' ? cap(S.subcat || '') : cap(S.cat || '');
+        if (!gs.length) {
+          setC(`<div class="gv"><div class="es"><div class="es-i">🔍</div><h3>No guides found</h3><p>${S.q ? `No results for "${esc(S.q)}"` : S.view === 'recent' ? 'Open a guide to see it here.' : 'No guides in this category.'}</p></div></div>`);
+          return;
+        }
+        const cards = gs.map(g => `
+    <div class="gc" onclick="openGuide('${g.path.replace(/'/g, "\\'")}')">
+      <div class="gc-h"><div class="gc-ico">${g.icon}</div><div><div class="gc-title">${esc(g.title)}</div><div class="gc-cat">${esc(cap(g.cat))}</div></div></div>
+      <div class="gc-desc">${esc(g.desc)}</div>
+      <div class="gc-tags">${g.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+    </div>`).join('');
+        setC(`<div class="gv"><div class="gv-hd"><h2>${esc(title)}</h2><p>${gs.length} guide${gs.length !== 1 ? 's' : ''}</p></div><div class="gg">${cards}</div></div>`);
+      }
+
+      // ── Open Guide ─────────────────────────────────────────────────────────────────
+      async function openGuide(path) {
+        setC(ldg('Loading guide…'));
+
+        if (S.connMode === 'api') {
+          try {
+            const data = await apiCall('GET', `/api/guides/content?path=${encodeURIComponent(path)}`);
+            setC(ldg('Fetching images…'));
+            const content = await embedImages(data.content, data.path);
+            S.cur = { path: data.path, title: data.title, rawContent: data.content, content, steps: parseSteps(content), meta: data };
+            S.done = new Set();
+            S.recent = [path, ...S.recent.filter(p => p !== path)].slice(0, 10);
+            S.view = 'guide'; renderViewer();
+            addLog(`Opened: ${data.title}`, 's');
+          } catch (err) {
+            setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>Could not load</h3><p>${esc(err.message)}</p></div></div>`);
+          }
+          return;
+        }
+
+        // SSH mode
+        const r = await api.exec(`cat "${path}" 2>/dev/null`);
+        if (!r.ok || !r.stdout) {
+          setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>Could not load</h3><p>${esc(r.error || 'File not found')}</p></div></div>`);
+          return;
+        }
+        const meta = S.guides.find(g => g.path === path) || {};
+        setC(ldg('Fetching images…'));
+        const content = await embedImages(r.stdout, path);
+        S.cur = { path, title: meta.title || 'Guide', rawContent: r.stdout, content, steps: parseSteps(content), meta };
+        S.done = new Set();
+        S.recent = [path, ...S.recent.filter(p => p !== path)].slice(0, 10);
+        S.view = 'guide'; renderViewer();
+        addLog(`Opened: ${meta.title || path}`, 's');
+      }
+
+      // ── Embed images ───────────────────────────────────────────────────────────────
+      async function embedImages(src, guidePath) {
+        const dir = guidePath.substring(0, guidePath.lastIndexOf('/'));
+        const re = /!\[([^\]]*)\]\(([^)"'\s]+)\)/g;
+        const hits = [...src.matchAll(re)];
+        const local = hits.filter(([, , s]) => !/^https?:\/\/|^data:|^#/.test(s));
+        if (!local.length) return src;
+
+        addLog(`Embedding ${local.length} image(s)…`, 's');
+        let out = src;
+
+        for (const [full, alt, imgSrc] of local) {
+          const imgPath = imgSrc.startsWith('/') ? imgSrc : `${dir}/${imgSrc.replace(/^\.\//, '')}`;
+
+          if (S.connMode === 'api') {
+            try {
+              const img = await apiCall('GET', `/api/images?path=${encodeURIComponent(imgPath)}`);
+              out = out.replace(full, `![${alt}](data:${img.mime};base64,${img.data})`);
+              addLog(`  ✓ ${img.name}`, 's');
+            } catch {
+              out = out.replace(full, `<span class="img-warn">⚠ Image not found: ${esc(imgSrc)}</span>`);
+              addLog(`  ✗ ${imgPath.split('/').pop()} — not found`, 'e');
+            }
+            continue;
+          }
+
+          // SSH mode
+          const ext = imgPath.split('.').pop().toLowerCase().split('?')[0];
+          const mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', webp: 'image/webp', bmp: 'image/bmp' }[ext] || 'image/png';
+          const res = await api.exec(`base64 "${imgPath}" 2>/dev/null | tr -d '\\n\\r'`);
+          if (res.ok && res.stdout.trim()) {
+            out = out.replace(full, `![${alt}](data:${mime};base64,${res.stdout.trim()})`);
+            addLog(`  ✓ ${imgPath.split('/').pop()}`, 's');
+          } else {
+            out = out.replace(full, `<span class="img-warn">⚠ Image not found: ${esc(imgSrc)}</span>`);
+            addLog(`  ✗ ${imgPath.split('/').pop()} — not found`, 'e');
+          }
+        }
+        return out;
+      }
+
+      // ── Render viewer ──────────────────────────────────────────────────────────────
+      function parseSteps(src) {
+        const lines = src.split('\n'); const steps = []; let cur = null, fm = false;
+        for (let i = 0; i < lines.length; i++) {
+          const l = lines[i];
+          if (i === 0 && l === '---') { fm = true; continue; }
+          if (fm && l === '---') { fm = false; continue; }
+          if (fm) continue;
+          if (/^##\s/.test(l)) {
+            if (cur) steps.push(cur);
+            cur = { title: l.replace(/^##\s+(?:step\s+\d+[:.\s-]*)?/i, '').trim(), body: [] };
+          } else if (cur) cur.body.push(l);
+        }
+        if (cur) steps.push(cur);
+        if (!steps.length) lines.filter(l => /^\d+\.\s/.test(l)).forEach(l => steps.push({ title: l.replace(/^\d+\.\s/, ''), body: [] }));
+        return steps;
+      }
+
+      function renderViewer() {
+        const g = S.cur; if (!g) { setView('all'); return; }
+        const done = S.done.size, total = g.steps.length, pct = total ? Math.round(done / total * 100) : 0;
+        const tags = (g.meta.tags || []).map(t => `<span class="tag ac">${esc(t)}</span>`).join('');
+
+        const actBar = (S.connMode === 'api' && S.userRole === 'admin') ? `
+    <div class="act-bar">
+      <button class="btn-s" onclick="openEditor('edit')">✏️ Edit</button>
+      <button class="btn-danger" onclick="deleteGuide()">🗑 Delete</button>
+    </div>` : '';
+
+        let body = '';
+        if (g.steps.length) {
+          const cards = g.steps.map((s, i) => {
+            const ok = S.done.has(i);
+            return `<div class="step ${ok ? 'done' : ''}" id="s${i}">
+        <div class="step-hd" onclick="togStep(${i})">
+          <div class="chk" onclick="togDone(event,${i})">${ok ? '✓' : `<span class="snum">${i + 1}</span>`}</div>
+          <div class="stitle">${esc(s.title)}</div><span class="sarr">▶</span>
+        </div>
+        <div class="sbody"><div class="md">${marked.parse(s.body.join('\n'))}</div></div>
+      </div>`;
+          }).join('');
+          body = `${total ? `<div class="pbar-w"><div class="pbar-l"><span>${done}/${total} steps</span><span>${pct}%</span></div><div class="pbar"><div class="pfill" style="width:${pct}%"></div></div></div>` : ''}
+    <div class="steps-lbl">Steps</div>${cards}`;
+        } else {
+          body = `<div class="md">${marked.parse(g.content.replace(/^---[\s\S]*?---\n/, ''))}</div>`;
+        }
+
+        const catId = g.meta.cat || 'general';
+        const apiBadge = S.connMode === 'api' ? '<span class="api-badge">API</span>' : '';
+        setC(`<div class="gview">
+    <div class="gnav"><a onclick="setView('all')">All Guides</a> › <a onclick="setView('category','${esc(catId)}')">${esc(cap(catId))}</a>${g.meta.subcat ? ` › <a onclick="setView('subcat','${esc(catId)}','${esc(g.meta.subcat)}')">${esc(cap(g.meta.subcat))}</a>` : ''} › <span>${esc(g.title)}</span></div>
+    <h1>${esc(g.title)}${apiBadge}</h1>
+    <div class="gmeta"><span>📁 ${esc(cap(catId))}</span>${total ? `<span>📋 ${total} steps</span>` : ''} ${tags}</div>
+    ${actBar}${body}
+  </div>`);
+      }
+
+      function togStep(i) {
+        const el = document.getElementById('s' + i); if (!el) return;
+        const was = el.classList.contains('open');
+        document.querySelectorAll('.step.open').forEach(e => e.classList.remove('open'));
+        if (!was) el.classList.add('open');
+      }
+      function togDone(e, i) {
+        e.stopPropagation();
+        const wasDone = S.done.has(i);
+        wasDone ? S.done.delete(i) : S.done.add(i);
+        renderViewer();
+        if (wasDone) setTimeout(() => togStep(i), 0);
+      }
+
+      // ── Guide editor ───────────────────────────────────────────────────────────────
+      let edMode = 'create';
+
+      function openEditor(mode) {
+        edMode = mode;
+        document.getElementById('em-title').textContent = mode === 'create' ? 'New Guide' : 'Edit Guide';
+        const pathInput = document.getElementById('em-path');
+        pathInput.readOnly = mode === 'edit';
+        if (mode === 'edit' && S.cur) {
+          pathInput.value = S.cur.path;
+          document.getElementById('em-content').value = S.cur.rawContent || S.cur.content;
+        } else {
+          pathInput.value = S.cat ? `${S.cat}/new-guide/guide.md` : 'general/new-guide/guide.md';
+          document.getElementById('em-content').value =
+            '---\ntitle: \ntags: \ndescription: \n---\n\n# Guide Title\n\n## Step 1: \n\nDescription here.\n';
+        }
+        document.getElementById('em-icon-btn').textContent = getCurrentIcon(document.getElementById('em-content').value);
+        document.getElementById('ed-overlay').style.display = 'flex';
+        setTimeout(() => (mode === 'create' ? pathInput : document.getElementById('em-content')).focus(), 50);
+      }
+
+      function closeEditor() { document.getElementById('ed-overlay').style.display = 'none'; }
+      function overlayClick(e) { if (e.target === document.getElementById('ed-overlay')) closeEditor(); }
+
+      // ── Icon picker ────────────────────────────────────────────────────────────────
+      const GUIDE_ICONS = [
+        '📋', '📖', '📄', '📝', '📚', '⚙️', '🔧', '🔨', '🏗️', '🛠️', '🚀', '🔄', '🎯', '✅', '💡',
+        '⚠️', '🚨', '🔍', '📊', '📈', '🗄️', '🔐', '🔑', '🌐', '💾', '🔔', '📌', '🧩', '📡', '☁️',
+        '🎛️', '🔬', '🏛️', '🖥️', '🐛', '🔒', '🔓', '🧪', '📦', '🗂️', '🔗', '📎', '🗃️', '🖨️', '🖱️'
+      ];
+
+      function toggleIconPicker(e) {
+        e.stopPropagation();
+        const p = document.getElementById('em-icon-picker');
+        if (p.style.display === 'block') { p.style.display = 'none'; return; }
+        document.getElementById('em-icon-grid').innerHTML = GUIDE_ICONS
+          .map(ico => `<button onclick="selectIcon('${ico}')">${ico}</button>`).join('');
+        p.style.display = 'block';
+        setTimeout(() => document.addEventListener('click', () => { p.style.display = 'none'; }, { once: true }), 0);
+      }
+
+      function selectIcon(ico) {
+        document.getElementById('em-icon-btn').textContent = ico;
+        document.getElementById('em-icon-picker').style.display = 'none';
+        const ta = document.getElementById('em-content');
+        ta.value = setFrontmatterField(ta.value, 'icon', ico);
+      }
+
+      function getCurrentIcon(content) {
+        if (!content.startsWith('---')) return '📄';
+        const end = content.indexOf('\n---', 3);
+        if (end === -1) return '📄';
+        const m = content.slice(4, end).match(/^icon:\s*(.+)$/m);
+        return m ? m[1].trim() : '📄';
+      }
+
+      function setFrontmatterField(content, key, value) {
+        if (content.startsWith('---')) {
+          const end = content.indexOf('\n---', 3);
+          if (end !== -1) {
+            const body = content.slice(4, end);
+            const keyRe = new RegExp(`^${key}:.*$`, 'm');
+            const newBody = keyRe.test(body) ? body.replace(keyRe, `${key}: ${value}`) : body + `\n${key}: ${value}`;
+            return '---\n' + newBody + '\n---' + content.slice(end + 4);
+          }
+        }
+        return `---\nicon: ${value}\n---\n\n` + content;
+      }
+
+      async function insertImage() {
+        const guidePath = document.getElementById('em-path').value.trim();
+        if (!guidePath) return addLog('Set the guide path before inserting an image.', 'e');
+
+        const btn = document.getElementById('em-img');
+        btn.disabled = true;
+        try {
+          const file = await api.readImage();
+          if (!file) return;
+
+          const dir = guidePath.includes('/') ? guidePath.substring(0, guidePath.lastIndexOf('/')) : '';
+          const serverPath = dir ? `${dir}/${file.name}` : file.name;
+
+          await apiCall('POST', '/api/images', { path: serverPath, data: file.data, mime: file.mime });
+          const md = `![${file.name}](${file.name})`;
+          const ta = document.getElementById('em-content');
+          const pos = ta.selectionStart;
+          ta.value = ta.value.slice(0, pos) + md + ta.value.slice(pos);
+          ta.selectionStart = ta.selectionEnd = pos + md.length;
+          ta.focus();
+          addLog(`Uploaded: ${file.name}`, 's');
+        } catch (err) {
+          addLog(`Image upload failed: ${err.message}`, 'e');
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function saveGuide() {
+        const gpath = document.getElementById('em-path').value.trim();
+        const content = document.getElementById('em-content').value;
+        if (!gpath) return addLog('Path is required', 'e');
+        if (!gpath.endsWith('.md')) return addLog('Path must end in .md', 'e');
+        if (!content) return addLog('Content is required', 'e');
+
+        const btn = document.getElementById('em-save');
+        btn.disabled = true; btn.textContent = 'Saving…';
+        try {
+          if (edMode === 'create') await apiCall('POST', '/api/guides', { path: gpath, content });
+          else await apiCall('PUT', '/api/guides', { path: gpath, content });
+          addLog(`${edMode === 'create' ? 'Created' : 'Updated'}: ${gpath}`, 's');
+          closeEditor();
+          await loadGuides();
+          if (edMode === 'edit') openGuide(gpath);
+        } catch (err) {
+          addLog(`Save failed: ${err.message}`, 'e');
+        } finally {
+          btn.disabled = false; btn.textContent = 'Save';
+        }
+      }
+
+      async function deleteGuide() {
+        if (!S.cur) return;
+        if (!confirm(`Delete "${S.cur.title}"?\nThis cannot be undone.`)) return;
+        try {
+          await apiCall('DELETE', '/api/guides', { path: S.cur.path });
+          addLog(`Deleted: ${S.cur.title}`, 's');
+          S.cur = null; await loadGuides(); setView('all');
+        } catch (err) {
+          addLog(`Delete failed: ${err.message}`, 'e');
+        }
+      }
+
+      // ── Search / filter ────────────────────────────────────────────────────────────
+      let stimer;
+      function onSearch(q) { clearTimeout(stimer); S.q = q; stimer = setTimeout(() => { if (S.view !== 'guide') renderGrid(); }, 200); }
+      function togRTL() {
+        S.rtl = !S.rtl;
+        document.documentElement.dir = S.rtl ? 'rtl' : 'ltr';
+        document.getElementById('rtl-btn').classList.toggle('on', S.rtl);
+      }
+
+      // ── Log panel ──────────────────────────────────────────────────────────────────
+      function addLog(txt, type = '') {
+        const out = document.getElementById('lo');
+        const now = new Date().toLocaleTimeString('en', { hour12: false });
+        txt.split('\n').filter(l => l.trim()).forEach(l => {
+          const d = document.createElement('div'); d.className = 'll';
+          d.innerHTML = `<span class="lt">${now}</span><span class="lx ${type}">${esc(l)}</span>`;
+          out.appendChild(d);
+        });
+        out.scrollTop = out.scrollHeight;
+      }
+      function togLog() {
+        S.logCol = !S.logCol;
+        document.getElementById('lp').classList.toggle('col', S.logCol);
+        document.getElementById('ltogico').setAttribute('points', S.logCol ? '6 9 12 15 18 9' : '18 15 12 9 6 15');
+      }
+      function clrLog(e) { e.stopPropagation(); document.getElementById('lo').innerHTML = ''; }
+
+      // ── Utilities ──────────────────────────────────────────────────────────────────
+      function setC(h) { document.getElementById('ct').innerHTML = h; }
+      function ldg(m) { return `<div class="es"><div class="spin2"></div><p>${m}</p></div>`; }
+      function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+      function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
+      function v(id) { return document.getElementById(id)?.value?.trim() || ''; }
+
+      document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); document.getElementById('si')?.focus(); }
+        if (e.key === 'Escape') {
+          if (document.getElementById('ed-overlay').style.display === 'flex') { closeEditor(); return; }
+          if (S.view === 'guide') setView('all');
+        }
+      });
+    </script>
+  </body>
+
+</html>
