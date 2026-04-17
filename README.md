@@ -1,21 +1,18 @@
 # Pipeline Guide
 
-A desktop app for teams to write, browse, and follow step-by-step operational guides — accessed securely over SSH.
+A desktop app for teams to write, browse, and follow step-by-step operational guides.
 
-Built with Electron + a lightweight Node.js API server. All guide content lives on your server; the app connects via SSH tunnel so nothing is exposed to the internet.
+Built with Electron + a lightweight Node.js REST API server. Guide content lives on your server; the app connects directly over HTTP with username/password authentication.
 
 ---
 
 ## Architecture
 
 ```
-[ Electron App ]  ──SSH──►  [ Remote Server ]
-   (Windows)                  node server.js
-                               ~/guides/*.md
+[ Electron App ]  ──HTTP──►  [ Guide Server ]
+   (Windows)                   node server.js
+                                ~/guides/*.md
 ```
-
-- **SSH Only mode** — reads guides directly via `cat` / `find` over SSH. No server setup required.
-- **API Server mode** — connects to the Express REST API over an SSH tunnel. Enables guide creation, editing, deletion, and image uploads.
 
 ---
 
@@ -28,26 +25,21 @@ npm install
 npm start
 ```
 
-### 2. Set up the guide server (on the remote machine)
+### 2. Set up the guide server
 
 ```bash
 cd server
-bash setup.sh [guides-dir] [port]
+npm install
+node server.js
 ```
 
-`setup.sh` will:
-- Install server dependencies
-- Create sample guides in `~/guides`
-- Generate an auth token and write `server/.env`
-- Optionally install a systemd service (`INSTALL_SERVICE=1 bash setup.sh`)
+Create `server/users.json` and `server/.env` before starting (see below).
 
 ### 3. Connect
 
 Fill in the login form:
-- **Host / Port** — your SSH server
-- **Username / Auth** — SSH credentials (password or private key)
-- **Connection Mode** — SSH Only (read-only) or API Server (full CRUD)
-- **Guide Password** — your account password from `server/users.json` (API mode only)
+- **Server Address / Port** — hostname or IP of the machine running the server, default port `7842`
+- **Username / Password** — your credentials from `server/users.json`
 
 ---
 
@@ -86,9 +78,13 @@ guides/
   runbooks/
     service-down/
       guide.md
+  infrastructure/
+    kubernetes/
+      deployments/
+        guide.md
 ```
 
-The path determines hierarchy: `category/subcategory/guide.md`
+The folder path determines the category hierarchy — nesting is unlimited.
 
 ---
 
@@ -98,7 +94,8 @@ The path determines hierarchy: `category/subcategory/guide.md`
 
 | Variable | Default | Description |
 |---|---|---|
-| `PORT` | `7842` | Port (localhost only) |
+| `PORT` | `7842` | Port to listen on |
+| `BIND` | `0.0.0.0` | Bind address (`127.0.0.1` for localhost only) |
 | `GUIDES_DIR` | `~/guides` | Path to guides directory |
 | `USERS_FILE` | `./users.json` | Path to users file |
 | `NODE_ENV` | `development` | Set to `production` to enforce auth |
@@ -112,21 +109,30 @@ The path determines hierarchy: `category/subcategory/guide.md`
 ]
 ```
 
-Roles: `admin` (full CRUD) · `viewer` (read only)
+Roles: `admin` (full CRUD + image upload) · `viewer` (read only)
 
-> `users.json` is gitignored — never commit it.
+> `users.json` and `.env` are gitignored — never commit them.
 
-### Running manually
+### API
 
-```bash
-cd server && node server.js
-```
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/login` | — | Get session token |
+| `POST` | `/api/logout` | any | Invalidate token |
+| `GET` | `/api/me` | any | Current user info |
+| `GET` | `/api/guides` | any | List all guides |
+| `GET` | `/api/guides/content?path=…` | any | Get guide content |
+| `GET` | `/api/images?path=…` | any | Get image as base64 |
+| `POST` | `/api/guides` | admin | Create guide |
+| `PUT` | `/api/guides` | admin | Update guide |
+| `DELETE` | `/api/guides` | admin | Delete guide |
+| `POST` | `/api/images` | admin | Upload image |
 
 ---
 
 ## Security Notes
 
-- The server binds only to `127.0.0.1` — never directly reachable from the network
-- All remote access goes through an SSH tunnel
 - Session tokens are in-memory and expire on server restart
 - `users.json` and `.env` are gitignored
+- Set `BIND=127.0.0.1` if running the server and app on the same machine
+- Use a reverse proxy (nginx, Caddy) with TLS if exposing over a network
