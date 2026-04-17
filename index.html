@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src http://127.0.0.1:*">
+      content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src http://*:*">
     <title>Pipeline Guide</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
     <style>
@@ -1344,52 +1344,17 @@
           </svg>
           Connect to Guide Server
         </div>
-        <div class="card-sub">SSH into your server to access guides, runbooks, and workflow documentation</div>
+        <div class="card-sub">Connect to your guide server</div>
 
         <div class="fr">
-          <label>Host &amp; Port</label>
+          <label>Server Address &amp; Port</label>
           <div class="split">
             <input type="text" id="fh" placeholder="hostname or IP" autocomplete="off">
-            <input type="number" id="fp" value="22" placeholder="22">
+            <input type="number" id="fp" value="7842" placeholder="7842">
           </div>
         </div>
-        <div class="fr"><label>Username</label><input type="text" id="fu" placeholder="admin" autocomplete="off"></div>
-
-        <div class="auth-tabs">
-          <button class="atab on" onclick="authMode('pw')" id="tpw">Password</button>
-          <button class="atab" onclick="authMode('key')" id="tkey">Private Key</button>
-        </div>
-        <div id="apw">
-          <div class="fr"><label>Password</label><input type="password" id="fpass" placeholder="••••••••"></div>
-        </div>
-        <div id="akey" style="display:none">
-          <div class="fr">
-            <label>Key File</label>
-            <div style="display:flex;gap:6px">
-              <input type="text" id="fkp" placeholder="No file selected" readonly style="flex:1;cursor:pointer" onclick="pickKey()">
-              <button class="btn-s" onclick="pickKey()">Browse</button>
-            </div>
-          </div>
-          <div class="fr"><label>Passphrase (optional)</label><input type="password" id="fpp" placeholder="Leave blank if none"></div>
-        </div>
-
-        <div class="sec-divider">Connection Mode</div>
-        <div class="mode-tabs">
-          <button class="mtab on" onclick="setConnMode('ssh')" id="mssh">SSH Only</button>
-          <button class="mtab" onclick="setConnMode('api')" id="mapi">API Server</button>
-        </div>
-        <div id="aapi" style="display:none">
-          <div class="fr"><label>Guide Password</label><input type="password" id="fapi-pass" placeholder="••••••••" autocomplete="off"></div>
-          <div class="fr">
-            <label>Server Port</label>
-            <input type="number" id="fapiport" value="7842" placeholder="7842">
-          </div>
-        </div>
-
-        <div class="fr" id="fdir-row">
-          <label>Guides Directory (on server)</label>
-          <input type="text" id="fdir" value="~/guides" placeholder="~/guides">
-        </div>
+        <div class="fr"><label>Username</label><input type="text" id="fu" placeholder="username" autocomplete="off"></div>
+        <div class="fr"><label>Password</label><input type="password" id="fpass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doConnect()"></div>
 
         <div id="lerr" class="err-box"></div>
         <button class="btn-p" id="cbtn" onclick="doConnect()">Connect</button>
@@ -1526,10 +1491,8 @@
 
     <script>
       const S = {
-        host: '', user: '', dir: '~/guides',
-        authMode: 'pw', connMode: 'ssh',
-        apiToken: '', localPort: null, userRole: null, apiUser: null,
-        pkey: null,
+        host: '', apiBase: '',
+        apiToken: '', userRole: null, apiUser: null,
         guides: [], recent: [], cur: null, done: new Set(),
         view: 'home', cat: null, q: '', tag: '', logCol: false, rtl: false,
         navPath: [], history: [],
@@ -1541,87 +1504,27 @@
       } catch {}
 
       // ── Login helpers ──────────────────────────────────────────────────────────────
-      function authMode(m) {
-        S.authMode = m;
-        document.getElementById('apw').style.display = m === 'pw' ? '' : 'none';
-        document.getElementById('akey').style.display = m === 'key' ? '' : 'none';
-        document.getElementById('tpw').classList.toggle('on', m === 'pw');
-        document.getElementById('tkey').classList.toggle('on', m === 'key');
-      }
-
-      function setConnMode(m) {
-        S.connMode = m;
-        document.getElementById('aapi').style.display = m === 'api' ? '' : 'none';
-        document.getElementById('fdir-row').style.display = m === 'api' ? 'none' : '';
-        document.getElementById('mssh').classList.toggle('on', m === 'ssh');
-        document.getElementById('mapi').classList.toggle('on', m === 'api');
-      }
-
-      async function pickKey() {
-        const k = await api.readKey();
-        if (k) { S.pkey = k; document.getElementById('fkp').value = '✓ Key loaded'; }
-      }
-
       async function doConnect() {
-        const host = v('fh'), port = +v('fp') || 22, user = v('fu');
-        if (!host || !user) return showErr('Host and username are required.');
-
-        const cfg = { host, port, username: user };
-        if (S.authMode === 'pw') cfg.password = v('fpass');
-        else {
-          if (!S.pkey) return showErr('Please select a private key file.');
-          cfg.privateKey = S.pkey;
-          const pp = v('fpp'); if (pp) cfg.passphrase = pp;
-        }
-
+        const host = v('fh'), port = +v('fp') || 7842, user = v('fu'), pass = v('fpass');
+        if (!host || !user || !pass) return showErr('Server address, username and password are required.');
         btnState(true);
-        const r = await api.connect(cfg);
-        if (!r.ok) { btnState(false); return showErr(r.error || 'Connection failed'); }
-
-        if (S.connMode === 'api') {
-          const apiUser = user;
-          const apiPass = document.getElementById('fapi-pass').value;
-          const apiPort = +v('fapiport') || 7842;
-          if (!apiPass) { btnState(false); return showErr('Guide password is required in API mode.'); }
-
-          const t = await api.tunnelOpen(apiPort);
-          if (!t.ok) { await api.disconnect(); btnState(false); return showErr('SSH tunnel failed: ' + (t.error || 'unknown')); }
-          S.localPort = t.port;
-
-          try {
-            const lr = await fetch(`http://127.0.0.1:${t.port}/api/login`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ username: apiUser, password: apiPass })
-            });
-            const ld = await lr.json();
-            if (!lr.ok) throw new Error(ld.error || 'Login failed');
-            S.apiToken = ld.token; S.userRole = ld.role; S.apiUser = ld.username;
-            addLog(`Signed in as ${ld.username} (${ld.role})`, 's');
-          } catch (err) {
-            await api.tunnelClose(); await api.disconnect();
-            S.localPort = null; btnState(false);
-            return showErr('Login failed: ' + err.message);
-          }
-
-          let serverDir = '~/guides';
-          try {
-            const h = await apiCall('GET', '/api/health');
-            serverDir = h.dir || serverDir;
-            addLog(`API server ready on tunnel port ${t.port}`, 's');
-          } catch {
-            await api.tunnelClose(); await api.disconnect();
-            S.localPort = null; btnState(false);
-            return showErr('Guide server not responding. Is it running on the remote?');
-          }
-          S.dir = serverDir;
-        } else {
-          S.dir = v('fdir') || '~/guides';
+        S.apiBase = `http://${host}:${port}`;
+        try {
+          const lr = await fetch(`${S.apiBase}/api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user, password: pass })
+          });
+          const ld = await lr.json();
+          if (!lr.ok) throw new Error(ld.error || 'Login failed');
+          S.host = host; S.apiToken = ld.token; S.userRole = ld.role; S.apiUser = ld.username;
+          addLog(`Signed in as ${ld.username} (${ld.role})`, 's');
+        } catch (err) {
+          S.apiBase = ''; btnState(false);
+          return showErr(err.message);
         }
-
-        S.host = host; S.user = user;
         btnState(false);
-        goApp(S.apiUser);
+        goApp();
         await loadGuides();
       }
 
@@ -1634,28 +1537,20 @@
         e.textContent = '⚠ ' + m; e.classList.add('on');
       }
 
-      function goApp(apiUser) {
+      function goApp() {
         document.getElementById('ls').classList.remove('on');
         document.getElementById('as').classList.add('on');
         document.getElementById('cd').classList.add('on');
-        const displayUser = apiUser || S.user;
-        const label = S.connMode === 'api'
-          ? `${displayUser}@${S.host} (${S.userRole})`
-          : `${S.user}@${S.host}`;
+        const label = `${S.apiUser}@${S.host} (${S.userRole})`;
         document.getElementById('cl').textContent = label;
         document.getElementById('cinfo').textContent = label;
-        document.getElementById('ngb').style.display = (S.connMode === 'api' && S.userRole === 'admin') ? '' : 'none';
-        api.onData(d => addLog(d));
-        api.onDone(() => document.getElementById('ldot').classList.remove('live'));
+        document.getElementById('ngb').style.display = S.userRole === 'admin' ? '' : 'none';
       }
 
       async function doDisconnect() {
-        if (S.connMode === 'api' && S.localPort) {
-          if (S.apiToken) try { await apiCall('POST', '/api/logout', {}); } catch { }
-          await api.tunnelClose();
-        }
-        await api.disconnect(); api.offAll();
-        S.guides = []; S.cur = null; S.recent = []; S.localPort = null; S.userRole = null; S.apiUser = null;
+        if (S.apiToken) try { await apiCall('POST', '/api/logout', {}); } catch {}
+        S.guides = []; S.cur = null; S.recent = [];
+        S.apiToken = ''; S.userRole = null; S.apiUser = null; S.apiBase = '';
         document.getElementById('as').classList.remove('on');
         document.getElementById('ls').classList.add('on');
         document.getElementById('cd').classList.remove('on');
@@ -1671,7 +1566,7 @@
           headers: { 'Authorization': `Bearer ${S.apiToken}`, 'Content-Type': 'application/json' }
         };
         if (body !== undefined) opts.body = JSON.stringify(body);
-        const r = await fetch(`http://127.0.0.1:${S.localPort}${endpoint}`, opts);
+        const r = await fetch(`${S.apiBase}${endpoint}`, opts);
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || r.statusText);
         return data;
@@ -1680,69 +1575,18 @@
       // ── Load guides ────────────────────────────────────────────────────────────────
       async function loadGuides() {
         const rb = document.getElementById('rb'); rb.classList.add('spin');
-        setC(ldg('Scanning server for guides…'));
-
-        if (S.connMode === 'api') {
-          try {
-            const { guides } = await apiCall('GET', '/api/guides');
-            rb.classList.remove('spin');
-            S.guides = guides.map(g => ({ ...g, icon: g.frontmatter?.icon || catIcon(g.pathParts?.[0] || g.cat) }));
-            buildSidebar(); navHome();
-            addLog(`Loaded ${S.guides.length} guide(s)`, 's');
-          } catch (err) {
-            rb.classList.remove('spin');
-            setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>Load failed</h3><p>${esc(err.message)}</p></div></div>`);
-            addLog(err.message, 'e');
-          }
-          return;
+        setC(ldg('Loading guides…'));
+        try {
+          const { guides } = await apiCall('GET', '/api/guides');
+          rb.classList.remove('spin');
+          S.guides = guides.map(g => ({ ...g, icon: g.frontmatter?.icon || catIcon(g.pathParts?.[0] || g.cat) }));
+          buildSidebar(); navHome();
+          addLog(`Loaded ${S.guides.length} guide(s)`, 's');
+        } catch (err) {
+          rb.classList.remove('spin');
+          setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>Load failed</h3><p>${esc(err.message)}</p></div></div>`);
+          addLog(err.message, 'e');
         }
-
-        // SSH mode
-        const r = await api.exec(`find ${S.dir} -name "*.md" -type f 2>/dev/null | sort`);
-        rb.classList.remove('spin');
-        if (r.stderr?.includes('No such file')) { await makeSamples(); return loadGuides(); }
-        const paths = (r.stdout || '').trim().split('\n').filter(Boolean);
-        S.guides = [];
-        for (const p of paths) { const m = await getMeta(p); if (m) S.guides.push(m); }
-        buildSidebar(); navHome();
-        addLog(`Loaded ${S.guides.length} guide(s) from ${S.dir}`, 's');
-      }
-
-      async function getMeta(path) {
-        const r = await api.exec(`head -35 "${path}" 2>/dev/null`);
-        if (!r.ok) return null;
-        const lines = r.stdout.split('\n');
-        let fm = {}, inFm = false;
-        for (let i = 0; i < lines.length; i++) {
-          const l = lines[i];
-          if (i === 0 && l === '---') { inFm = true; continue; }
-          if (inFm && l === '---') { inFm = false; continue; }
-          if (inFm) { const [k, ...vs] = l.split(':'); fm[k.trim()] = vs.join(':').trim().replace(/^['"]|['"]$/g, ''); continue; }
-        }
-        let title = fm.title || '';
-        const tags = (fm.tags || '').split(',').map(t => t.trim()).filter(Boolean);
-        let desc = fm.description || '';
-        if (!title) { const h1 = lines.find(l => l.startsWith('# ')); title = h1 ? h1.slice(2) : path.split('/').pop().replace('.md', '').replace(/-/g, ' '); }
-        if (!desc) { const p = lines.find(l => l && !l.startsWith('#') && !l.startsWith('-') && !l.startsWith('---') && l.trim()); desc = p ? p.slice(0, 110) + (p.length > 110 ? '…' : '') : ''; }
-        const parts = path.replace(S.dir + '/', '').split('/');
-        const cat = parts.length > 1 ? parts[0] : 'general';
-        const icon = fm.icon || catIcon(cat);
-        const pathParts = parts.slice(0, -1);
-        return { path, title, cat, pathParts, tags, desc, icon };
-      }
-
-      async function makeSamples() {
-        const d = S.dir;
-        const write = async (p, c) => {
-          const b64 = btoa(unescape(encodeURIComponent(c)));
-          await api.exec(`mkdir -p "$(dirname '${p}')" && printf '%s' '${b64}' | base64 -d > '${p}'`);
-        };
-        await write(`${d}/ci-cd/jenkins-pipeline/guide.md`,
-          `---\ntitle: Jenkins Pipeline Troubleshooting\ntags: jenkins, ci, build\ndescription: Diagnose and fix common Jenkins pipeline failures\n---\n\n# Jenkins Pipeline Troubleshooting\n\n## Step 1: Check Console Logs\n\nNavigate to the failed build and open Console Output.\n\n\`\`\`bash\njenkins-cli console <job-name> <build-number>\n\`\`\`\n\nLook for **ERROR**, **FAILED**, or timeout messages.\n\n## Step 2: Verify Agent Availability\n\nCheck agents are online and have disk/memory headroom.\n\n## Step 3: Check Plugin Versions\n\nGo to **Manage Jenkins → Plugin Manager** and look for warnings.\n\n## Step 4: Replay the Pipeline\n\nUse the **Replay** button to tweak Jenkinsfile without committing.\n\n## Step 5: Escalate\n\nIf unresolved, share the build URL and log excerpt with the DevOps team.\n`);
-        await write(`${d}/runbooks/service-down/guide.md`,
-          `---\ntitle: Service Down Runbook\ntags: incident, on-call, runbook\ndescription: Immediate steps when a production service goes down\n---\n\n# Service Down Runbook\n\n## Step 1: Confirm the Outage\n\n\`\`\`bash\ncurl -I https://your-service/health\n\`\`\`\n\n## Step 2: Notify the Team\n\nPost in **#incidents** with: service name, first seen time, user impact.\n\n## Step 3: Check Recent Deployments\n\nReview deploys in the last 30 minutes.\n\n## Step 4: Inspect Resources\n\n\`\`\`bash\nkubectl top pods -n production\n\`\`\`\n\n## Step 5: Rollback if Needed\n\n\`\`\`bash\nkubectl rollout undo deployment/<service-name> -n production\n\`\`\`\n\n## Step 6: Post-Incident Review\n\nSchedule a blameless postmortem within 48 hours.\n`);
-        await write(`${d}/troubleshooting/db-connection/guide.md`,
-          `---\ntitle: Database Connection Failures\ntags: database, postgres, troubleshooting\ndescription: Steps to diagnose why the app cannot connect to the database\n---\n\n# Database Connection Failures\n\n## Step 1: Verify DB is Running\n\n\`\`\`bash\nsystemctl status postgresql\n\`\`\`\n\n## Step 2: Test Connectivity\n\n\`\`\`bash\npsql -h <host> -U <user> -d <db> -c "SELECT 1"\n\`\`\`\n\n## Step 3: Check Connection Limits\n\n\`\`\`sql\nSELECT count(*) FROM pg_stat_activity;\nSHOW max_connections;\n\`\`\`\n\n## Step 4: Review App Config\n\nConfirm DATABASE_URL, DB_HOST, DB_PORT are correct.\n\n## Step 5: Check Firewall\n\nEnsure port 5432 is open between app servers and DB.\n`);
       }
 
       // ── Sidebar ────────────────────────────────────────────────────────────────────
@@ -2075,37 +1919,18 @@
       async function openGuide(path) {
         pushHistory();
         setC(ldg('Loading guide…'));
-
-        if (S.connMode === 'api') {
-          try {
-            const data = await apiCall('GET', `/api/guides/content?path=${encodeURIComponent(path)}`);
-            setC(ldg('Fetching images…'));
-            const content = await embedImages(data.content, data.path);
-            S.cur = { path: data.path, title: data.title, rawContent: data.content, content, steps: parseSteps(content), meta: data };
-            S.done = new Set();
-            S.recent = [path, ...S.recent.filter(p => p !== path)].slice(0, 10);
-            S.view = 'guide'; renderViewer();
-            addLog(`Opened: ${data.title}`, 's');
-          } catch (err) {
-            setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>Could not load</h3><p>${esc(err.message)}</p></div></div>`);
-          }
-          return;
+        try {
+          const data = await apiCall('GET', `/api/guides/content?path=${encodeURIComponent(path)}`);
+          setC(ldg('Fetching images…'));
+          const content = await embedImages(data.content, data.path);
+          S.cur = { path: data.path, title: data.title, rawContent: data.content, content, steps: parseSteps(content), meta: data };
+          S.done = new Set();
+          S.recent = [path, ...S.recent.filter(p => p !== path)].slice(0, 10);
+          S.view = 'guide'; renderViewer();
+          addLog(`Opened: ${data.title}`, 's');
+        } catch (err) {
+          setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>Could not load</h3><p>${esc(err.message)}</p></div></div>`);
         }
-
-        // SSH mode
-        const r = await api.exec(`cat "${path}" 2>/dev/null`);
-        if (!r.ok || !r.stdout) {
-          setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>Could not load</h3><p>${esc(r.error || 'File not found')}</p></div></div>`);
-          return;
-        }
-        const meta = S.guides.find(g => g.path === path) || {};
-        setC(ldg('Fetching images…'));
-        const content = await embedImages(r.stdout, path);
-        S.cur = { path, title: meta.title || 'Guide', rawContent: r.stdout, content, steps: parseSteps(content), meta };
-        S.done = new Set();
-        S.recent = [path, ...S.recent.filter(p => p !== path)].slice(0, 10);
-        S.view = 'guide'; renderViewer();
-        addLog(`Opened: ${meta.title || path}`, 's');
       }
 
       // ── Embed images ───────────────────────────────────────────────────────────────
@@ -2115,33 +1940,15 @@
         const hits = [...src.matchAll(re)];
         const local = hits.filter(([, , s]) => !/^https?:\/\/|^data:|^#/.test(s));
         if (!local.length) return src;
-
         addLog(`Embedding ${local.length} image(s)…`, 's');
         let out = src;
-
         for (const [full, alt, imgSrc] of local) {
           const imgPath = imgSrc.startsWith('/') ? imgSrc : `${dir}/${imgSrc.replace(/^\.\//, '')}`;
-
-          if (S.connMode === 'api') {
-            try {
-              const img = await apiCall('GET', `/api/images?path=${encodeURIComponent(imgPath)}`);
-              out = out.replace(full, `![${alt}](data:${img.mime};base64,${img.data})`);
-              addLog(`  ✓ ${img.name}`, 's');
-            } catch {
-              out = out.replace(full, `<span class="img-warn">⚠ Image not found: ${esc(imgSrc)}</span>`);
-              addLog(`  ✗ ${imgPath.split('/').pop()} — not found`, 'e');
-            }
-            continue;
-          }
-
-          // SSH mode
-          const ext = imgPath.split('.').pop().toLowerCase().split('?')[0];
-          const mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', webp: 'image/webp', bmp: 'image/bmp' }[ext] || 'image/png';
-          const res = await api.exec(`base64 "${imgPath}" 2>/dev/null | tr -d '\\n\\r'`);
-          if (res.ok && res.stdout.trim()) {
-            out = out.replace(full, `![${alt}](data:${mime};base64,${res.stdout.trim()})`);
-            addLog(`  ✓ ${imgPath.split('/').pop()}`, 's');
-          } else {
+          try {
+            const img = await apiCall('GET', `/api/images?path=${encodeURIComponent(imgPath)}`);
+            out = out.replace(full, `![${alt}](data:${img.mime};base64,${img.data})`);
+            addLog(`  ✓ ${img.name}`, 's');
+          } catch {
             out = out.replace(full, `<span class="img-warn">⚠ Image not found: ${esc(imgSrc)}</span>`);
             addLog(`  ✗ ${imgPath.split('/').pop()} — not found`, 'e');
           }
@@ -2172,7 +1979,7 @@
         const done = S.done.size, total = g.steps.length, pct = total ? Math.round(done / total * 100) : 0;
         const tags = (g.meta.tags || []).map(t => `<span class="tag ac">${esc(t)}</span>`).join('');
 
-        const actBar = (S.connMode === 'api' && S.userRole === 'admin') ? `
+        const actBar = S.userRole === 'admin' ? `
     <div class="act-bar">
       <button class="btn-s" onclick="openEditor('edit')">✏️ Edit</button>
       <button class="btn-danger" onclick="deleteGuide()">🗑 Delete</button>
@@ -2201,10 +2008,9 @@
           const p = pathParts.slice(0, i + 1).join('/');
           return `<a onclick="navTo('${p}')">${esc(cap(seg))}</a>`;
         }).join(' › ');
-        const apiBadge = S.connMode === 'api' ? '<span class="api-badge">API</span>' : '';
         setC(`<div class="gview">
     <div class="gnav"><a onclick="navHome()">Browse</a> › ${breadLinks} › <span>${esc(g.title)}</span></div>
-    <h1>${esc(g.title)}${apiBadge}</h1>
+    <h1>${esc(g.title)}</h1>
     <div class="gmeta"><span>📁 ${esc(pathParts.map(p => cap(p)).join(' › '))}</span>${total ? `<span>📋 ${total} steps</span>` : ''} ${tags}</div>
     ${actBar}${body}
   </div>`);
