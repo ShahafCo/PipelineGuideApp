@@ -103,8 +103,8 @@ function parseMeta(filePath, raw) {
     ? String(fm.tags).split(',').map(t => t.trim()).filter(Boolean)
     : [];
 
-  const subcat = parts.length > 2 ? parts[1] : null;
-  return { path: rel.replace(/\\/g, '/'), title, cat, subcat, tags, desc, frontmatter: fm };
+  const pathParts = parts.slice(0, -1);
+  return { path: rel.replace(/\\/g, '/'), pathParts, title, cat, tags, desc, frontmatter: fm };
 }
 
 function walkGuides(dir) {
