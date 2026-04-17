@@ -1294,6 +1294,11 @@
         background: rgba(88, 166, 255, .1);
         color: var(--accent);
       }
+      .sb-cat-ico { border-radius:3px; padding:1px 3px; cursor:pointer; }
+      .sb-cat-ico:hover { background:var(--bg4); outline:1px solid var(--bd); }
+      .sb-chev { margin-left:2px; color:var(--muted); font-size:11px; padding:2px 5px; border-radius:3px; transition:transform .18s; display:inline-block; cursor:pointer; }
+      .sb-chev:hover { background:var(--bg4); color:var(--text); }
+      .sb-chev.open { transform:rotate(90deg); }
     </style>
   </head>
 
@@ -1397,7 +1402,7 @@
         <div id="sb">
           <div class="sb-sec">
             <div class="sb-lbl">Browse</div>
-            <div class="sb-item on" id="nall" onclick="setView('all')">📋 All Guides<span class="badge" id="ball">0</span></div>
+            <div class="sb-item on" id="nall" onclick="navHome()">🏠 Browse<span class="badge" id="ball">0</span></div>
             <div class="sb-item" id="nrec" onclick="setView('recent')">🕐 Recently Viewed</div>
           </div>
           <div class="sb-sec" style="flex:1;overflow-y:auto">
@@ -1412,12 +1417,13 @@
 
         <div id="main">
           <div id="toolbar">
+            <button class="rbtn" id="back-btn" style="display:none" onclick="goBack()" title="Go back">← Back</button>
             <div class="sw">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <input type="text" id="si" placeholder="Search guides, runbooks, keywords… (Ctrl+F)" oninput="onSearch(this.value)">
+              <input type="text" id="si" placeholder="Search all guides… (Ctrl+F)" oninput="onSearch(this.value)">
             </div>
             <div class="tag-dd" id="tag-dd">
               <button class="fsel" id="tag-dd-btn" onclick="togTagDd(event)">All Tags ▾</button>
@@ -1513,6 +1519,11 @@
       </div>
     </div>
 
+    <!-- Floating icon picker (shared for category icons) -->
+    <div id="float-icon-picker" style="position:fixed;display:none;z-index:600;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.55)">
+      <div id="float-icon-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+    </div>
+
     <script>
       const S = {
         host: '', user: '', dir: '~/guides',
@@ -1520,8 +1531,14 @@
         apiToken: '', localPort: null, userRole: null, apiUser: null,
         pkey: null,
         guides: [], recent: [], cur: null, done: new Set(),
-        view: 'all', cat: null, subcat: null, q: '', tag: '', logCol: false, rtl: false
+        view: 'home', cat: null, q: '', tag: '', logCol: false, rtl: false,
+        navPath: [], history: [],
+        collapsedCats: new Set(), catIcons: {}
       };
+      try {
+        S.catIcons = JSON.parse(localStorage.getItem('pg:catIcons') || '{}');
+        JSON.parse(localStorage.getItem('pg:collapsedCats') || '[]').forEach(c => S.collapsedCats.add(c));
+      } catch {}
 
       // ── Login helpers ──────────────────────────────────────────────────────────────
       function authMode(m) {
@@ -1669,8 +1686,8 @@
           try {
             const { guides } = await apiCall('GET', '/api/guides');
             rb.classList.remove('spin');
-            S.guides = guides.map(g => ({ ...g, icon: g.frontmatter?.icon || catIcon(g.cat) }));
-            buildSidebar(); buildTags(); setView(S.view);
+            S.guides = guides.map(g => ({ ...g, icon: g.frontmatter?.icon || catIcon(g.pathParts?.[0] || g.cat) }));
+            buildSidebar(); navHome();
             addLog(`Loaded ${S.guides.length} guide(s)`, 's');
           } catch (err) {
             rb.classList.remove('spin');
@@ -1687,7 +1704,7 @@
         const paths = (r.stdout || '').trim().split('\n').filter(Boolean);
         S.guides = [];
         for (const p of paths) { const m = await getMeta(p); if (m) S.guides.push(m); }
-        buildSidebar(); buildTags(); setView(S.view);
+        buildSidebar(); navHome();
         addLog(`Loaded ${S.guides.length} guide(s) from ${S.dir}`, 's');
       }
 
@@ -1710,8 +1727,8 @@
         const parts = path.replace(S.dir + '/', '').split('/');
         const cat = parts.length > 1 ? parts[0] : 'general';
         const icon = fm.icon || catIcon(cat);
-        const subcat = parts.length > 2 ? parts[1] : null;
-        return { path, title, cat, subcat, tags, desc, icon };
+        const pathParts = parts.slice(0, -1);
+        return { path, title, cat, pathParts, tags, desc, icon };
       }
 
       async function makeSamples() {
@@ -1730,36 +1747,127 @@
 
       // ── Sidebar ────────────────────────────────────────────────────────────────────
       function catIcon(cat) {
+        if (S.catIcons[cat]) return S.catIcons[cat];
         const icos = { 'ci-cd': '⚙️', 'runbooks': '📖', 'troubleshooting': '🔧', 'data': '📊', 'infrastructure': '🏗️', 'security': '🔐', 'general': '📄' };
         return icos[cat.toLowerCase()] || Object.entries(icos).find(([k]) => cat.toLowerCase().includes(k))?.[1] || '📄';
       }
 
       function buildSidebar() {
-        const tree = {};
+        // Build recursive count tree from pathParts
+        const root = {};
         S.guides.forEach(g => {
-          if (!tree[g.cat]) tree[g.cat] = { count: 0, subcats: {} };
-          tree[g.cat].count++;
-          if (g.subcat) tree[g.cat].subcats[g.subcat] = (tree[g.cat].subcats[g.subcat] || 0) + 1;
+          const parts = (g.pathParts && g.pathParts.length) ? g.pathParts : [g.cat || 'general'];
+          let node = root;
+          for (const part of parts) {
+            if (!node[part]) node[part] = { _count: 0, _children: {} };
+            node[part]._count++;
+            node = node[part]._children;
+          }
         });
         document.getElementById('ball').textContent = S.guides.length;
         const el = document.getElementById('cats'); el.innerHTML = '';
-        for (const [c, { count, subcats }] of Object.entries(tree)) {
+        renderTreeLevel(el, root, 0, '');
+      }
+
+      function renderTreeLevel(el, node, depth, parentPath) {
+        for (const [name, data] of Object.entries(node)) {
+          const fullPath = parentPath ? `${parentPath}/${name}` : name;
+          const children = Object.entries(data._children).filter(([k]) => !k.startsWith('_'));
+          const hasChildren = children.length > 0;
+          const collapsed = S.collapsedCats.has(fullPath);
+
           const d = document.createElement('div');
-          d.className = 'sb-item'; d.id = 'nc-' + c;
-          d.innerHTML = `${catIcon(c)} ${cap(c)}<span class="badge">${count}</span>`;
-          d.onclick = () => setView('category', c);
+          d.className = 'sb-item';
+          d.id = 'nb-' + fullPath.replace(/\//g, '::');
+          if (depth > 0) d.style.paddingLeft = `${12 + depth * 14}px`;
+
+          if (depth === 0) {
+            const ico = document.createElement('span');
+            ico.className = 'sb-cat-ico'; ico.textContent = catIcon(name);
+            ico.title = 'Change icon';
+            ico.onclick = e => { e.stopPropagation(); pickCatIcon(name, ico); };
+            d.appendChild(ico);
+          } else {
+            const icoSpan = document.createElement('span');
+            icoSpan.textContent = hasChildren ? '📁 ' : '📄 ';
+            d.appendChild(icoSpan);
+          }
+
+          const lbl = document.createElement('span');
+          lbl.style.flex = '1'; lbl.textContent = cap(name);
+          lbl.onclick = () => navTo(fullPath);
+          d.appendChild(lbl);
+
+          const badge = document.createElement('span');
+          badge.className = 'badge'; badge.textContent = data._count;
+          d.appendChild(badge);
+
+          if (hasChildren) {
+            const chev = document.createElement('span');
+            chev.className = 'sb-chev' + (collapsed ? '' : ' open');
+            chev.id = 'chev-' + fullPath.replace(/\//g, '::');
+            chev.textContent = '›';
+            chev.onclick = e => { e.stopPropagation(); togCat(fullPath); };
+            d.appendChild(chev);
+          } else {
+            d.onclick = () => navTo(fullPath);
+          }
           el.appendChild(d);
-          for (const [sub, n] of Object.entries(subcats)) {
-            const sd = document.createElement('div');
-            sd.className = 'sb-sub'; sd.id = `nc-${c}::${sub}`;
-            sd.innerHTML = `📁 ${cap(sub)}<span class="badge">${n}</span>`;
-            sd.onclick = () => setView('subcat', c, sub);
-            el.appendChild(sd);
+
+          if (hasChildren && !collapsed) {
+            renderTreeLevel(el, data._children, depth + 1, fullPath);
           }
         }
       }
+
+      function togCat(cat) {
+        S.collapsedCats.has(cat) ? S.collapsedCats.delete(cat) : S.collapsedCats.add(cat);
+        try { localStorage.setItem('pg:collapsedCats', JSON.stringify([...S.collapsedCats])); } catch {}
+        buildSidebar(); applySidebarActive();
+      }
+
+      function applySidebarActive() {
+        document.querySelectorAll('.sb-item').forEach(e => e.classList.remove('on'));
+        if (S.view === 'home')   document.getElementById('nall')?.classList.add('on');
+        else if (S.view === 'recent') document.getElementById('nrec')?.classList.add('on');
+        else if (S.navPath.length) {
+          const key = S.navPath.join('/').replace(/\//g, '::');
+          document.getElementById('nb-' + key)?.classList.add('on');
+        }
+      }
+
+      function pickCatIcon(cat, anchorEl) {
+        const picker = document.getElementById('float-icon-picker');
+        const grid   = document.getElementById('float-icon-grid');
+        grid.innerHTML = GUIDE_ICONS.map(ico =>
+          `<button style="font-size:17px;width:30px;height:30px;border:none;background:transparent;cursor:pointer;border-radius:4px" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'" onclick="selectCatIcon('${cat}','${ico}')">${ico}</button>`
+        ).join('');
+        const r = anchorEl.getBoundingClientRect();
+        picker.style.left = (r.right + 6) + 'px';
+        picker.style.top  = r.top + 'px';
+        picker.style.display = 'block';
+        setTimeout(() => document.addEventListener('click', () => { picker.style.display = 'none'; }, { once: true }), 0);
+      }
+
+      function selectCatIcon(cat, ico) {
+        S.catIcons[cat] = ico;
+        try { localStorage.setItem('pg:catIcons', JSON.stringify(S.catIcons)); } catch {}
+        document.getElementById('float-icon-picker').style.display = 'none';
+        buildSidebar(); applySidebarActive();
+      }
+      function getContextGuides() {
+        if (S.view === 'folder' && S.navPath.length) {
+          return S.guides.filter(g => {
+            const parts = (g.pathParts && g.pathParts.length) ? g.pathParts : [g.cat || 'general'];
+            return S.navPath.every((seg, i) => parts[i] === seg);
+          });
+        }
+        return S.guides;
+      }
+
       function buildTags() {
-        const tags = new Set(); S.guides.forEach(g => g.tags.forEach(t => tags.add(t)));
+        const gs = (S.view === 'home' || S.view === 'recent' || S.view === 'guide') ? S.guides : getContextGuides();
+        const tags = new Set(); gs.forEach(g => g.tags.forEach(t => tags.add(t)));
         const list = document.getElementById('tag-dd-list'); list.innerHTML = '';
         [['', 'All Tags'], ...[...tags].sort().map(t => [t, t])].forEach(([val, label]) => {
           const d = document.createElement('div');
@@ -1784,45 +1892,188 @@
         if (S.view !== 'guide') renderGrid();
       }
 
+      // ── Navigation ─────────────────────────────────────────────────────────────────
+      function pushHistory() {
+        S.history.push({ view: S.view, navPath: [...S.navPath], cat: S.cat, cur: S.cur });
+        updateBackBtn();
+      }
+
+      function updateBackBtn() {
+        const btn = document.getElementById('back-btn');
+        if (btn) btn.style.display = S.history.length ? '' : 'none';
+      }
+
+      function goBack() {
+        const prev = S.history.pop();
+        if (!prev) return;
+        S.view = prev.view; S.navPath = prev.navPath; S.cat = prev.cat; S.cur = prev.cur;
+        updateBackBtn();
+        applySidebarActive();
+        if (S.view !== 'guide') buildTags();
+        S.view === 'guide' ? renderViewer() : renderGrid();
+      }
+
+      function navTo(pathStr) {
+        pushHistory();
+        S.navPath = typeof pathStr === 'string' ? pathStr.split('/').filter(Boolean) : pathStr;
+        S.view = 'folder';
+        S.cat = S.navPath[0] || null;
+        applySidebarActive();
+        buildTags();
+        renderGrid();
+      }
+
+      function navHome() {
+        S.view = 'home'; S.navPath = []; S.cat = null; S.history = [];
+        updateBackBtn();
+        applySidebarActive();
+        buildTags();
+        renderGrid();
+      }
+
+      function buildBreadcrumb() {
+        if (!S.navPath.length) return '';
+        const parts = S.navPath.map((seg, i) => {
+          const p = S.navPath.slice(0, i + 1).join('/');
+          return `<a onclick="navTo('${p}')">${esc(cap(seg))}</a>`;
+        });
+        return `<div class="gnav"><a onclick="navHome()">Browse</a> › ${parts.join(' › ')}</div>`;
+      }
+
       // ── Views ──────────────────────────────────────────────────────────────────────
       function setView(view, cat = null, subcat = null) {
-        S.view = view; S.cat = cat; S.subcat = subcat;
-        document.querySelectorAll('.sb-item, .sb-sub').forEach(e => e.classList.remove('on'));
-        if (view === 'all') document.getElementById('nall')?.classList.add('on');
-        else if (view === 'recent') document.getElementById('nrec')?.classList.add('on');
-        else if (view === 'category') document.getElementById('nc-' + cat)?.classList.add('on');
-        else if (view === 'subcat') document.getElementById(`nc-${cat}::${subcat}`)?.classList.add('on');
-        view === 'guide' ? renderViewer() : renderGrid();
+        if (view === 'all' || view === 'home') { navHome(); return; }
+        if (view === 'category' && cat) { navTo(cat); return; }
+        if (view === 'subcat' && cat) { navTo([cat, subcat].filter(Boolean).join('/')); return; }
+        if (view === 'recent') {
+          S.view = 'recent'; S.navPath = []; S.cat = null;
+          applySidebarActive(); buildTags(); renderGrid(); return;
+        }
+        if (view === 'guide') { renderViewer(); return; }
       }
 
       function filtered() {
         let gs = [...S.guides];
-        if (S.view === 'recent') gs = S.recent.map(p => gs.find(g => g.path === p)).filter(Boolean);
-        else if (S.view === 'subcat' && S.cat) gs = gs.filter(g => g.cat === S.cat && g.subcat === S.subcat);
-        else if (S.view === 'category' && S.cat) gs = gs.filter(g => g.cat === S.cat);
-        if (S.q) { const q = S.q.toLowerCase(); gs = gs.filter(g => g.title.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q) || g.tags.some(t => t.includes(q)) || g.cat.includes(q)); }
+        if (S.view === 'recent') {
+          gs = S.recent.map(p => gs.find(g => g.path === p)).filter(Boolean);
+        } else if (S.view === 'folder' && S.navPath.length && !S.q) {
+          gs = gs.filter(g => {
+            const parts = (g.pathParts && g.pathParts.length) ? g.pathParts : [g.cat || 'general'];
+            return S.navPath.every((seg, i) => parts[i] === seg);
+          });
+        }
+        if (S.q) {
+          const q = S.q.toLowerCase();
+          gs = gs.filter(g =>
+            g.title.toLowerCase().includes(q) ||
+            g.desc.toLowerCase().includes(q) ||
+            g.tags.some(t => t.includes(q)) ||
+            (g.pathParts || [g.cat]).some(p => p && p.toLowerCase().includes(q))
+          );
+        }
         if (S.tag) gs = gs.filter(g => g.tags.includes(S.tag));
         return gs;
       }
 
-      function renderGrid() {
-        const gs = filtered();
-        const title = S.view === 'all' ? 'All Guides' : S.view === 'recent' ? 'Recently Viewed' : S.view === 'subcat' ? cap(S.subcat || '') : cap(S.cat || '');
-        if (!gs.length) {
-          setC(`<div class="gv"><div class="es"><div class="es-i">🔍</div><h3>No guides found</h3><p>${S.q ? `No results for "${esc(S.q)}"` : S.view === 'recent' ? 'Open a guide to see it here.' : 'No guides in this category.'}</p></div></div>`);
+      function guideCard(g, subtitle) {
+        const p = g.path.replace(/'/g, "\\'");
+        const sub = subtitle || (g.pathParts || [g.cat]).map(s => cap(s)).join(' › ');
+        return `<div class="gc" onclick="openGuide('${p}')">
+          <div class="gc-h"><div class="gc-ico">${g.icon || '📄'}</div><div><div class="gc-title">${esc(g.title)}</div><div class="gc-cat">${esc(sub)}</div></div></div>
+          <div class="gc-desc">${esc(g.desc)}</div>
+          <div class="gc-tags">${g.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        </div>`;
+      }
+
+      function renderHome() {
+        const topCats = {};
+        S.guides.forEach(g => {
+          const cat = (g.pathParts && g.pathParts.length) ? g.pathParts[0] : (g.cat || 'general');
+          if (!topCats[cat]) topCats[cat] = { count: 0, guides: [] };
+          topCats[cat].count++;
+          topCats[cat].guides.push(g);
+        });
+        if (!Object.keys(topCats).length) {
+          setC(`<div class="gv"><div class="es"><div class="es-i">📭</div><h3>No guides found</h3><p>Refresh or add guides to get started.</p></div></div>`);
           return;
         }
-        const cards = gs.map(g => `
-    <div class="gc" onclick="openGuide('${g.path.replace(/'/g, "\\'")}')">
-      <div class="gc-h"><div class="gc-ico">${g.icon}</div><div><div class="gc-title">${esc(g.title)}</div><div class="gc-cat">${esc(cap(g.cat))}</div></div></div>
-      <div class="gc-desc">${esc(g.desc)}</div>
-      <div class="gc-tags">${g.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-    </div>`).join('');
-        setC(`<div class="gv"><div class="gv-hd"><h2>${esc(title)}</h2><p>${gs.length} guide${gs.length !== 1 ? 's' : ''}</p></div><div class="gg">${cards}</div></div>`);
+        const cards = Object.entries(topCats).map(([cat, { count, guides }]) => {
+          const preview = guides.slice(0, 3).map(g => `<span class="tag">${esc(g.title)}</span>`).join('');
+          return `<div class="gc" onclick="navTo('${esc(cat)}')">
+            <div class="gc-h"><div class="gc-ico">${catIcon(cat)}</div><div><div class="gc-title">${esc(cap(cat))}</div><div class="gc-cat">${count} guide${count !== 1 ? 's' : ''}</div></div></div>
+            <div class="gc-tags">${preview}</div>
+          </div>`;
+        }).join('');
+        setC(`<div class="gv"><div class="gv-hd"><h2>Browse</h2><p>${Object.keys(topCats).length} categories · ${S.guides.length} guides</p></div><div class="gg">${cards}</div></div>`);
+      }
+
+      function renderGrid() {
+        // Global search ignores current folder
+        if (S.q) {
+          const gs = filtered();
+          const cards = gs.map(g => guideCard(g)).join('');
+          setC(`<div class="gv"><div class="gv-hd"><h2>Search Results</h2><p>${gs.length} result${gs.length !== 1 ? 's' : ''} for "${esc(S.q)}"</p></div><div class="gg">${gs.length ? cards : '<div class="es"><div class="es-i">🔍</div><h3>No results</h3></div>'}</div></div>`);
+          return;
+        }
+
+        if (S.view === 'home') { renderHome(); return; }
+
+        if (S.view === 'recent') {
+          const gs = filtered();
+          const cards = gs.map(g => guideCard(g)).join('');
+          setC(`<div class="gv"><div class="gv-hd"><h2>Recently Viewed</h2><p>${gs.length} guide${gs.length !== 1 ? 's' : ''}</p></div><div class="gg">${gs.length ? cards : '<div class="es"><div class="es-i">🕐</div><h3>No recent guides</h3><p>Open a guide to see it here.</p></div>'}</div></div>`);
+          return;
+        }
+
+        if (S.view === 'folder' && S.navPath.length) {
+          const depth = S.navPath.length;
+          const subfolders = {};
+          const directGuides = [];
+          S.guides.forEach(g => {
+            const parts = (g.pathParts && g.pathParts.length) ? g.pathParts : [g.cat || 'general'];
+            if (!S.navPath.every((seg, i) => parts[i] === seg)) return;
+            if (parts.length > depth) {
+              const sub = parts[depth];
+              if (!subfolders[sub]) subfolders[sub] = { count: 0, guides: [] };
+              subfolders[sub].count++;
+              subfolders[sub].guides.push(g);
+            } else if (parts.length === depth) {
+              directGuides.push(g);
+            }
+          });
+
+          const title = S.navPath.map(p => cap(p)).join(' › ');
+          const breadcrumb = buildBreadcrumb();
+          const tagFiltered = S.tag ? filtered() : null;
+
+          if (!S.tag && Object.keys(subfolders).length > 0) {
+            const folderCards = Object.entries(subfolders).map(([sub, { count, guides: sgs }]) => {
+              const subPath = [...S.navPath, sub].join('/');
+              const preview = sgs.slice(0, 3).map(g => `<span class="tag">${esc(g.title)}</span>`).join('');
+              return `<div class="gc" onclick="navTo('${esc(subPath)}')">
+                <div class="gc-h"><div class="gc-ico">📁</div><div><div class="gc-title">${esc(cap(sub))}</div><div class="gc-cat">${esc(title)}</div></div></div>
+                <div class="gc-desc">${count} guide${count !== 1 ? 's' : ''}</div>
+                <div class="gc-tags">${preview}</div>
+              </div>`;
+            }).join('');
+            const dirCards = directGuides.map(g => guideCard(g, title)).join('');
+            const total = Object.values(subfolders).reduce((a, b) => a + b.count, 0) + directGuides.length;
+            setC(`<div class="gv">${breadcrumb}<div class="gv-hd"><h2>${esc(title)}</h2><p>${Object.keys(subfolders).length} folder${Object.keys(subfolders).length !== 1 ? 's' : ''} · ${total} guide${total !== 1 ? 's' : ''}</p></div><div class="gg">${folderCards}${dirCards}</div></div>`);
+            return;
+          }
+
+          const gs = tagFiltered || filtered();
+          const cards = gs.map(g => guideCard(g, title)).join('');
+          setC(`<div class="gv">${breadcrumb}<div class="gv-hd"><h2>${esc(title)}</h2><p>${gs.length} guide${gs.length !== 1 ? 's' : ''}</p></div><div class="gg">${gs.length ? cards : '<div class="es"><div class="es-i">📭</div><h3>No guides here</h3></div>'}</div></div>`);
+          return;
+        }
+
+        renderHome();
       }
 
       // ── Open Guide ─────────────────────────────────────────────────────────────────
       async function openGuide(path) {
+        pushHistory();
         setC(ldg('Loading guide…'));
 
         if (S.connMode === 'api') {
@@ -1917,7 +2168,7 @@
       }
 
       function renderViewer() {
-        const g = S.cur; if (!g) { setView('all'); return; }
+        const g = S.cur; if (!g) { navHome(); return; }
         const done = S.done.size, total = g.steps.length, pct = total ? Math.round(done / total * 100) : 0;
         const tags = (g.meta.tags || []).map(t => `<span class="tag ac">${esc(t)}</span>`).join('');
 
@@ -1945,12 +2196,16 @@
           body = `<div class="md">${marked.parse(g.content.replace(/^---[\s\S]*?---\n/, ''))}</div>`;
         }
 
-        const catId = g.meta.cat || 'general';
+        const pathParts = (g.meta.pathParts && g.meta.pathParts.length) ? g.meta.pathParts : (g.meta.cat ? [g.meta.cat] : ['general']);
+        const breadLinks = pathParts.map((seg, i) => {
+          const p = pathParts.slice(0, i + 1).join('/');
+          return `<a onclick="navTo('${p}')">${esc(cap(seg))}</a>`;
+        }).join(' › ');
         const apiBadge = S.connMode === 'api' ? '<span class="api-badge">API</span>' : '';
         setC(`<div class="gview">
-    <div class="gnav"><a onclick="setView('all')">All Guides</a> › <a onclick="setView('category','${esc(catId)}')">${esc(cap(catId))}</a>${g.meta.subcat ? ` › <a onclick="setView('subcat','${esc(catId)}','${esc(g.meta.subcat)}')">${esc(cap(g.meta.subcat))}</a>` : ''} › <span>${esc(g.title)}</span></div>
+    <div class="gnav"><a onclick="navHome()">Browse</a> › ${breadLinks} › <span>${esc(g.title)}</span></div>
     <h1>${esc(g.title)}${apiBadge}</h1>
-    <div class="gmeta"><span>📁 ${esc(cap(catId))}</span>${total ? `<span>📋 ${total} steps</span>` : ''} ${tags}</div>
+    <div class="gmeta"><span>📁 ${esc(pathParts.map(p => cap(p)).join(' › '))}</span>${total ? `<span>📋 ${total} steps</span>` : ''} ${tags}</div>
     ${actBar}${body}
   </div>`);
       }
@@ -2095,7 +2350,7 @@
         try {
           await apiCall('DELETE', '/api/guides', { path: S.cur.path });
           addLog(`Deleted: ${S.cur.title}`, 's');
-          S.cur = null; await loadGuides(); setView('all');
+          S.cur = null; await loadGuides();
         } catch (err) {
           addLog(`Delete failed: ${err.message}`, 'e');
         }
@@ -2139,7 +2394,7 @@
         if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); document.getElementById('si')?.focus(); }
         if (e.key === 'Escape') {
           if (document.getElementById('ed-overlay').style.display === 'flex') { closeEditor(); return; }
-          if (S.view === 'guide') setView('all');
+          if (S.view === 'guide') goBack();
         }
       });
     </script>
