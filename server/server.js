@@ -159,7 +159,8 @@ app.get('/api/guides', auth, (_req, res) => {
     const guides = files.map(f => {
       try {
         const raw = fs.readFileSync(f, 'utf8');
-        return parseMeta(f, raw);
+        const meta = parseMeta(f, raw);
+        return { ...meta, updatedAt: fs.statSync(f).mtime.toISOString() };
       } catch { return null; }
     }).filter(Boolean);
     res.json({ guides });
