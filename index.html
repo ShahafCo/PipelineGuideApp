@@ -1294,6 +1294,11 @@
         background: rgba(88, 166, 255, .1);
         color: var(--accent);
       }
+      .sb-cat-ico { border-radius:3px; padding:1px 3px; cursor:pointer; }
+      .sb-cat-ico:hover { background:var(--bg4); outline:1px solid var(--bd); }
+      .sb-chev { margin-left:2px; color:var(--muted); font-size:11px; padding:2px 5px; border-radius:3px; transition:transform .18s; display:inline-block; cursor:pointer; }
+      .sb-chev:hover { background:var(--bg4); color:var(--text); }
+      .sb-chev.open { transform:rotate(90deg); }
     </style>
   </head>
 
@@ -1513,6 +1518,11 @@
       </div>
     </div>
 
+    <!-- Floating icon picker (shared for category icons) -->
+    <div id="float-icon-picker" style="position:fixed;display:none;z-index:600;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.55)">
+      <div id="float-icon-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+    </div>
+
     <script>
       const S = {
         host: '', user: '', dir: '~/guides',
@@ -1520,8 +1530,13 @@
         apiToken: '', localPort: null, userRole: null, apiUser: null,
         pkey: null,
         guides: [], recent: [], cur: null, done: new Set(),
-        view: 'all', cat: null, subcat: null, q: '', tag: '', logCol: false, rtl: false
+        view: 'all', cat: null, subcat: null, q: '', tag: '', logCol: false, rtl: false,
+        collapsedCats: new Set(), catIcons: {}
       };
+      try {
+        S.catIcons = JSON.parse(localStorage.getItem('pg:catIcons') || '{}');
+        JSON.parse(localStorage.getItem('pg:collapsedCats') || '[]').forEach(c => S.collapsedCats.add(c));
+      } catch {}
 
       // ── Login helpers ──────────────────────────────────────────────────────────────
       function authMode(m) {
@@ -1730,6 +1745,7 @@
 
       // ── Sidebar ────────────────────────────────────────────────────────────────────
       function catIcon(cat) {
+        if (S.catIcons[cat]) return S.catIcons[cat];
         const icos = { 'ci-cd': '⚙️', 'runbooks': '📖', 'troubleshooting': '🔧', 'data': '📊', 'infrastructure': '🏗️', 'security': '🔐', 'general': '📄' };
         return icos[cat.toLowerCase()] || Object.entries(icos).find(([k]) => cat.toLowerCase().includes(k))?.[1] || '📄';
       }
@@ -1744,22 +1760,91 @@
         document.getElementById('ball').textContent = S.guides.length;
         const el = document.getElementById('cats'); el.innerHTML = '';
         for (const [c, { count, subcats }] of Object.entries(tree)) {
+          const hasSubcats = Object.keys(subcats).length > 0;
+          const collapsed = S.collapsedCats.has(c);
           const d = document.createElement('div');
           d.className = 'sb-item'; d.id = 'nc-' + c;
-          d.innerHTML = `${catIcon(c)} ${cap(c)}<span class="badge">${count}</span>`;
-          d.onclick = () => setView('category', c);
+
+          const ico = document.createElement('span');
+          ico.className = 'sb-cat-ico'; ico.textContent = catIcon(c);
+          ico.title = 'Change icon';
+          ico.onclick = e => { e.stopPropagation(); pickCatIcon(c, ico); };
+          d.appendChild(ico);
+
+          const lbl = document.createElement('span');
+          lbl.style.flex = '1'; lbl.textContent = ' ' + cap(c);
+          lbl.onclick = () => setView('category', c);
+          d.appendChild(lbl);
+
+          const badge = document.createElement('span');
+          badge.className = 'badge'; badge.textContent = count;
+          d.appendChild(badge);
+
+          if (hasSubcats) {
+            const chev = document.createElement('span');
+            chev.className = 'sb-chev' + (collapsed ? '' : ' open');
+            chev.id = 'chev-' + c; chev.textContent = '›';
+            chev.onclick = e => { e.stopPropagation(); togCat(c); };
+            d.appendChild(chev);
+          } else {
+            d.onclick = () => setView('category', c);
+          }
           el.appendChild(d);
-          for (const [sub, n] of Object.entries(subcats)) {
-            const sd = document.createElement('div');
-            sd.className = 'sb-sub'; sd.id = `nc-${c}::${sub}`;
-            sd.innerHTML = `📁 ${cap(sub)}<span class="badge">${n}</span>`;
-            sd.onclick = () => setView('subcat', c, sub);
-            el.appendChild(sd);
+
+          if (hasSubcats && !collapsed) {
+            for (const [sub, n] of Object.entries(subcats)) {
+              const sd = document.createElement('div');
+              sd.className = 'sb-sub'; sd.id = `nc-${c}::${sub}`;
+              sd.innerHTML = `📁 ${cap(sub)}<span class="badge">${n}</span>`;
+              sd.onclick = () => setView('subcat', c, sub);
+              el.appendChild(sd);
+            }
           }
         }
       }
+
+      function togCat(cat) {
+        S.collapsedCats.has(cat) ? S.collapsedCats.delete(cat) : S.collapsedCats.add(cat);
+        try { localStorage.setItem('pg:collapsedCats', JSON.stringify([...S.collapsedCats])); } catch {}
+        buildSidebar(); applySidebarActive();
+      }
+
+      function applySidebarActive() {
+        document.querySelectorAll('.sb-item, .sb-sub').forEach(e => e.classList.remove('on'));
+        if (S.view === 'all')        document.getElementById('nall')?.classList.add('on');
+        else if (S.view === 'recent')     document.getElementById('nrec')?.classList.add('on');
+        else if (S.view === 'category')   document.getElementById('nc-' + S.cat)?.classList.add('on');
+        else if (S.view === 'subcat')     document.getElementById(`nc-${S.cat}::${S.subcat}`)?.classList.add('on');
+      }
+
+      function pickCatIcon(cat, anchorEl) {
+        const picker = document.getElementById('float-icon-picker');
+        const grid   = document.getElementById('float-icon-grid');
+        grid.innerHTML = GUIDE_ICONS.map(ico =>
+          `<button style="font-size:17px;width:30px;height:30px;border:none;background:transparent;cursor:pointer;border-radius:4px" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'" onclick="selectCatIcon('${cat}','${ico}')">${ico}</button>`
+        ).join('');
+        const r = anchorEl.getBoundingClientRect();
+        picker.style.left = (r.right + 6) + 'px';
+        picker.style.top  = r.top + 'px';
+        picker.style.display = 'block';
+        setTimeout(() => document.addEventListener('click', () => { picker.style.display = 'none'; }, { once: true }), 0);
+      }
+
+      function selectCatIcon(cat, ico) {
+        S.catIcons[cat] = ico;
+        try { localStorage.setItem('pg:catIcons', JSON.stringify(S.catIcons)); } catch {}
+        document.getElementById('float-icon-picker').style.display = 'none';
+        buildSidebar(); applySidebarActive();
+      }
+      function getContextGuides() {
+        if (S.view === 'category' && S.cat) return S.guides.filter(g => g.cat === S.cat);
+        if (S.view === 'subcat'   && S.cat) return S.guides.filter(g => g.cat === S.cat && g.subcat === S.subcat);
+        return S.guides;
+      }
+
       function buildTags() {
-        const tags = new Set(); S.guides.forEach(g => g.tags.forEach(t => tags.add(t)));
+        const gs = (S.view === 'all' || S.view === 'recent' || S.view === 'guide') ? S.guides : getContextGuides();
+        const tags = new Set(); gs.forEach(g => g.tags.forEach(t => tags.add(t)));
         const list = document.getElementById('tag-dd-list'); list.innerHTML = '';
         [['', 'All Tags'], ...[...tags].sort().map(t => [t, t])].forEach(([val, label]) => {
           const d = document.createElement('div');
@@ -1787,11 +1872,8 @@
       // ── Views ──────────────────────────────────────────────────────────────────────
       function setView(view, cat = null, subcat = null) {
         S.view = view; S.cat = cat; S.subcat = subcat;
-        document.querySelectorAll('.sb-item, .sb-sub').forEach(e => e.classList.remove('on'));
-        if (view === 'all') document.getElementById('nall')?.classList.add('on');
-        else if (view === 'recent') document.getElementById('nrec')?.classList.add('on');
-        else if (view === 'category') document.getElementById('nc-' + cat)?.classList.add('on');
-        else if (view === 'subcat') document.getElementById(`nc-${cat}::${subcat}`)?.classList.add('on');
+        applySidebarActive();
+        if (view !== 'guide') buildTags();
         view === 'guide' ? renderViewer() : renderGrid();
       }
 
@@ -1806,6 +1888,25 @@
       }
 
       function renderGrid() {
+        // Category drill-down: show subcat cards when no search/tag filter active
+        if (S.view === 'category' && S.cat && !S.q && !S.tag) {
+          const subcatMap = {};
+          S.guides.filter(g => g.cat === S.cat).forEach(g => {
+            if (g.subcat) { if (!subcatMap[g.subcat]) subcatMap[g.subcat] = []; subcatMap[g.subcat].push(g); }
+          });
+          if (Object.keys(subcatMap).length > 0) {
+            const cards = Object.entries(subcatMap).map(([sub, gs]) =>
+              `<div class="gc" onclick="setView('subcat','${esc(S.cat)}','${esc(sub)}')">
+                <div class="gc-h"><div class="gc-ico">📁</div><div><div class="gc-title">${esc(cap(sub))}</div><div class="gc-cat">${esc(cap(S.cat))}</div></div></div>
+                <div class="gc-desc">${gs.length} guide${gs.length !== 1 ? 's' : ''}</div>
+                <div class="gc-tags">${gs.slice(0,3).map(g => `<span class="tag">${esc(g.title)}</span>`).join('')}</div>
+              </div>`
+            ).join('');
+            setC(`<div class="gv"><div class="gv-hd"><h2>${esc(cap(S.cat))}</h2><p>${Object.keys(subcatMap).length} subcategories</p></div><div class="gg">${cards}</div></div>`);
+            return;
+          }
+        }
+
         const gs = filtered();
         const title = S.view === 'all' ? 'All Guides' : S.view === 'recent' ? 'Recently Viewed' : S.view === 'subcat' ? cap(S.subcat || '') : cap(S.cat || '');
         if (!gs.length) {
