@@ -147,6 +147,10 @@ class Sidebar {
     document.getElementById('tag-dd-btn').textContent = label + ' ▾';
     document.getElementById('tag-dd-list').style.display = 'none';
     document.querySelectorAll('.tag-dd-item').forEach(d => d.classList.toggle('on', d.textContent === label));
-    if (S.view !== 'guide') this.app.grid.render();
+    if (S.view === 'guide') {
+      S.history.length ? this.app.nav.back() : this.app.nav.home();
+    } else {
+      this.app.grid.render();
+    }
   }
 }

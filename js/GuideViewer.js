@@ -63,7 +63,7 @@ class GuideViewer {
     const S = this.app.S;
     const g = S.cur; if (!g) { this.app.nav.home(); return; }
     const done = S.done.size, total = g.steps.length, pct = total ? Math.round(done / total * 100) : 0;
-    const tags = (g.meta.tags || []).map(t => `<span class="tag ac">${esc(t)}</span>`).join('');
+    const tags = (g.meta.tags || []).map(t => `<span class="tag ac" onclick="app.sidebar.selectTag('${t.replace(/'/g,"\\'")}','${t.replace(/'/g,"\\'")}');">${esc(t)}</span>`).join('');
 
     const actBar = S.userRole === 'admin' ? `
     <div class="act-bar">
