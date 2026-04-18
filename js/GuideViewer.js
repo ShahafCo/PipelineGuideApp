@@ -15,7 +15,7 @@ class GuideViewer {
       S.done = new Set();
       S.recent = [path, ...S.recent.filter(p => p !== path)].slice(0, 10);
       S.view = 'guide'; this.render();
-      this.app.logger.add(`נפתח: ${data.title}`, 's');
+      this.app.logger.add(`Opened: ${data.title}`, 's');
     } catch (err) {
       setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>לא ניתן לטעון</h3><p>${esc(err.message)}</p></div></div>`);
     }
@@ -26,7 +26,7 @@ class GuideViewer {
     const re = /!\[([^\]]*)\]\(([^)"'\s]+)\)/g;
     const local = [...src.matchAll(re)].filter(([,,s]) => !/^https?:\/\/|^data:|^#/.test(s));
     if (!local.length) return src;
-    this.app.logger.add(`מטמין ${local.length} תמונות...`, 's');
+    this.app.logger.add(`Embedding ${local.length} image(s)...`, 's');
     let out = src;
     for (const [full, alt, imgSrc] of local) {
       const imgPath = imgSrc.startsWith('/') ? imgSrc : `${dir}/${imgSrc.replace(/^\.\//, '')}`;
@@ -36,7 +36,7 @@ class GuideViewer {
         this.app.logger.add(`  ✓ ${img.name}`, 's');
       } catch {
         out = out.replace(full, `<span class="img-warn">⚠ תמונה לא נמצאה: ${esc(imgSrc)}</span>`);
-        this.app.logger.add(`  ✗ ${imgPath.split('/').pop()} — לא נמצא`, 'e');
+        this.app.logger.add(`  ✗ ${imgPath.split('/').pop()} — not found`, 'e');
       }
     }
     return out;

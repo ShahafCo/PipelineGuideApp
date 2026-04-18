@@ -42,7 +42,7 @@ class GuideApp {
       const ld = await lr.json();
       if (!lr.ok) throw new Error(ld.error || 'כניסה נכשלה');
       this.S.host = host; this.S.apiToken = ld.token; this.S.userRole = ld.role; this.S.apiUser = ld.username;
-      this.logger.add(`מחובר כ-${ld.username} (${ld.role})`, 's');
+      this.logger.add(`Signed in as ${ld.username} (${ld.role})`, 's');
     } catch (err) {
       this.S.apiBase = ''; this._btnState(false);
       return this._showErr(err.message);
@@ -72,7 +72,7 @@ class GuideApp {
       rb.classList.remove('spin');
       this.S.guides = guides.map(g => ({ ...g, icon: g.frontmatter?.icon || this.sidebar.catIcon(g.pathParts?.[0] || g.cat) }));
       this.sidebar.build(); this.nav.home();
-      this.logger.add(`נטענו ${this.S.guides.length} מדריכים`, 's');
+      this.logger.add(`Loaded ${this.S.guides.length} guide(s)`, 's');
     } catch (err) {
       rb.classList.remove('spin');
       setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>טעינה נכשלה</h3><p>${esc(err.message)}</p></div></div>`);

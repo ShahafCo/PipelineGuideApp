@@ -66,7 +66,7 @@ class GuideEditor {
 
   async insertImage() {
     const guidePath = document.getElementById('em-path').value.trim();
-    if (!guidePath) return this.app.logger.add('הגדר את נתיב המדריך לפני הוספת תמונה.', 'e');
+    if (!guidePath) return this.app.logger.add('Set the guide path before inserting an image.', 'e');
     const btn = document.getElementById('em-img');
     btn.disabled = true;
     try {
@@ -81,9 +81,9 @@ class GuideEditor {
       ta.value = ta.value.slice(0, pos) + md + ta.value.slice(pos);
       ta.selectionStart = ta.selectionEnd = pos + md.length;
       ta.focus();
-      this.app.logger.add(`הועלה: ${file.name}`, 's');
+      this.app.logger.add(`Uploaded: ${file.name}`, 's');
     } catch (err) {
-      this.app.logger.add(`העלאת תמונה נכשלה: ${err.message}`, 'e');
+      this.app.logger.add(`Image upload failed: ${err.message}`, 'e');
     } finally {
       btn.disabled = false;
     }
@@ -92,20 +92,20 @@ class GuideEditor {
   async save() {
     const gpath = document.getElementById('em-path').value.trim();
     const content = document.getElementById('em-content').value;
-    if (!gpath)                 return this.app.logger.add('נתיב הוא שדה חובה', 'e');
-    if (!gpath.endsWith('.md')) return this.app.logger.add('הנתיב חייב להסתיים ב-.md', 'e');
-    if (!content)               return this.app.logger.add('תוכן הוא שדה חובה', 'e');
+    if (!gpath)                 return this.app.logger.add('Path is required', 'e');
+    if (!gpath.endsWith('.md')) return this.app.logger.add('Path must end in .md', 'e');
+    if (!content)               return this.app.logger.add('Content is required', 'e');
     const btn = document.getElementById('em-save');
     btn.disabled = true; btn.textContent = 'שומר...';
     try {
       if (this._mode === 'create') await this.app.apiClient.call('POST', '/api/guides', { path: gpath, content });
       else                         await this.app.apiClient.call('PUT',  '/api/guides', { path: gpath, content });
-      this.app.logger.add(`${this._mode === 'create' ? 'נוצר' : 'עודכן'}: ${gpath}`, 's');
+      this.app.logger.add(`${this._mode === 'create' ? 'Created' : 'Updated'}: ${gpath}`, 's');
       this.close();
       await this.app.loadGuides();
       if (this._mode === 'edit') this.app.viewer.open(gpath);
     } catch (err) {
-      this.app.logger.add(`שמירה נכשלה: ${err.message}`, 'e');
+      this.app.logger.add(`Save failed: ${err.message}`, 'e');
     } finally {
       btn.disabled = false; btn.textContent = 'שמור';
     }
@@ -117,10 +117,10 @@ class GuideEditor {
     if (!confirm(`מחק "${S.cur.title}"?\nלא ניתן לבטל פעולה זו.`)) return;
     try {
       await this.app.apiClient.call('DELETE', '/api/guides', { path: S.cur.path });
-      this.app.logger.add(`נמחק: ${S.cur.title}`, 's');
+      this.app.logger.add(`Deleted: ${S.cur.title}`, 's');
       S.cur = null; await this.app.loadGuides();
     } catch (err) {
-      this.app.logger.add(`מחיקה נכשלה: ${err.message}`, 'e');
+      this.app.logger.add(`Delete failed: ${err.message}`, 'e');
     }
   }
 }
