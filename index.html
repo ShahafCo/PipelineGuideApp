@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src http://*:*">
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <title>מדריך Pipeline</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
     <style>
@@ -57,7 +58,11 @@
       }
 
       /* ── LTR islands (code / editor / log) ── */
-      code, pre, .md pre, .ed, #lo {
+      code,
+      pre,
+      .md pre,
+      .ed,
+      #lo {
         direction: ltr;
         unicode-bidi: embed;
         text-align: left;
@@ -450,19 +455,27 @@
         transition: all .15s;
         margin-bottom: 6px;
       }
-      .admin-btn:hover { background: var(--bg3); color: var(--text); }
+
+      .admin-btn:hover {
+        background: var(--bg3);
+        color: var(--text);
+      }
 
       /* ── Admin panel ── */
       #ap-overlay {
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,.6);
+        background: rgba(0, 0, 0, .6);
         z-index: 500;
         align-items: center;
         justify-content: center;
       }
-      #ap-overlay.on { display: flex; }
+
+      #ap-overlay.on {
+        display: flex;
+      }
+
       #ap-box {
         background: var(--bg2);
         border: 1px solid var(--bd);
@@ -472,8 +485,9 @@
         max-height: 82vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 8px 32px rgba(0,0,0,.5);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
       }
+
       #ap-head {
         display: flex;
         align-items: center;
@@ -482,39 +496,131 @@
         gap: 10px;
         flex-shrink: 0;
       }
-      #ap-head h2 { flex:1; font-size:14px; color:var(--bright); font-weight:600; }
-      #ap-stats { font-size:11px; color:var(--muted); }
+
+      #ap-head h2 {
+        flex: 1;
+        font-size: 14px;
+        color: var(--bright);
+        font-weight: 600;
+      }
+
+      #ap-stats {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
       .ap-close {
-        width:26px; height:26px; border:none; background:transparent;
-        color:var(--muted); cursor:pointer; border-radius:4px; font-size:14px;
-        display:flex; align-items:center; justify-content:center;
+        width: 26px;
+        height: 26px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      .ap-close:hover { background:var(--bg3); color:var(--text); }
-      #ap-body { overflow-y:auto; flex:1; }
-      .ap-table { width:100%; border-collapse:collapse; font-size:12px; }
+
+      .ap-close:hover {
+        background: var(--bg3);
+        color: var(--text);
+      }
+
+      #ap-body {
+        overflow-y: auto;
+        flex: 1;
+      }
+
+      .ap-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
       .ap-table th {
-        text-align:start; padding:8px 14px; font-size:10px; font-weight:700;
-        text-transform:uppercase; letter-spacing:.05em; color:var(--muted);
-        border-bottom:1px solid var(--bd); position:sticky; top:0;
-        background:var(--bg2); cursor:pointer; user-select:none;
+        text-align: start;
+        padding: 8px 14px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--muted);
+        border-bottom: 1px solid var(--bd);
+        position: sticky;
+        top: 0;
+        background: var(--bg2);
+        cursor: pointer;
+        user-select: none;
       }
-      .ap-table th:hover { color:var(--text); }
-      .ap-table td { padding:8px 14px; border-bottom:1px solid var(--bd); vertical-align:middle; }
-      .ap-table tr:last-child td { border-bottom:none; }
-      .ap-table tr:hover td { background:var(--bg3); }
-      .ap-stale td { color:var(--red) !important; }
-      .ap-stale .ap-path { color:rgba(248,81,73,.7) !important; }
-      .ap-warn td { color:var(--yellow) !important; }
-      .ap-warn .ap-path { color:rgba(210,153,34,.7) !important; }
-      .ap-path { font-size:11px; color:var(--muted); }
+
+      .ap-table th:hover {
+        color: var(--text);
+      }
+
+      .ap-table td {
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--bd);
+        vertical-align: middle;
+      }
+
+      .ap-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .ap-table tr:hover td {
+        background: var(--bg3);
+      }
+
+      .ap-stale td {
+        color: var(--red) !important;
+      }
+
+      .ap-stale .ap-path {
+        color: rgba(248, 81, 73, .7) !important;
+      }
+
+      .ap-warn td {
+        color: var(--yellow) !important;
+      }
+
+      .ap-warn .ap-path {
+        color: rgba(210, 153, 34, .7) !important;
+      }
+
+      .ap-path {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
       .ap-age-badge {
-        display:inline-block; padding:2px 7px; border-radius:10px;
-        font-size:10px; font-weight:600;
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 600;
       }
-      .ap-age-stale { background:rgba(248,81,73,.15); color:var(--red); }
-      .ap-age-warn  { background:rgba(210,153,34,.15); color:var(--yellow); }
-      .ap-age-ok    { background:rgba(63,185,80,.15); color:var(--green); }
-      .ap-sort-ico  { margin-inline-start:4px; opacity:.5; }
+
+      .ap-age-stale {
+        background: rgba(248, 81, 73, .15);
+        color: var(--red);
+      }
+
+      .ap-age-warn {
+        background: rgba(210, 153, 34, .15);
+        color: var(--yellow);
+      }
+
+      .ap-age-ok {
+        background: rgba(63, 185, 80, .15);
+        color: var(--green);
+      }
+
+      .ap-sort-ico {
+        margin-inline-start: 4px;
+        opacity: .5;
+      }
 
       /* ── Main ── */
       #main {
@@ -1382,11 +1488,37 @@
         background: rgba(88, 166, 255, .1);
         color: var(--accent);
       }
-      .sb-cat-ico { border-radius:3px; padding:1px 3px; cursor:pointer; }
-      .sb-cat-ico:hover { background:var(--bg4); outline:1px solid var(--bd); }
-      .sb-chev { margin-inline-start:2px; color:var(--muted); font-size:11px; padding:2px 5px; border-radius:3px; transition:transform .18s; display:inline-block; cursor:pointer; }
-      .sb-chev:hover { background:var(--bg4); color:var(--text); }
-      .sb-chev.open { transform:rotate(90deg); }
+
+      .sb-cat-ico {
+        border-radius: 3px;
+        padding: 1px 3px;
+        cursor: pointer;
+      }
+
+      .sb-cat-ico:hover {
+        background: var(--bg4);
+        outline: 1px solid var(--bd);
+      }
+
+      .sb-chev {
+        margin-inline-start: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        padding: 2px 5px;
+        border-radius: 3px;
+        transition: transform .18s;
+        display: inline-block;
+        cursor: pointer;
+      }
+
+      .sb-chev:hover {
+        background: var(--bg4);
+        color: var(--text);
+      }
+
+      .sb-chev.open {
+        transform: rotate(90deg);
+      }
     </style>
   </head>
 
@@ -1455,7 +1587,7 @@
         <div id="sb">
           <div class="sb-sec">
             <div class="sb-lbl">עיון</div>
-            <div class="sb-item on" id="nall" onclick="app.nav.home()">🏠 עיון<span class="badge" id="ball">0</span></div>
+            <div class="sb-item on" id="nall" onclick="app.nav.home()">🏠 דף הבית<span class="badge" id="ball">0</span></div>
             <div class="sb-item" id="nrec" onclick="app.nav.recent()">🕐 נצפו לאחרונה</div>
           </div>
           <div class="sb-sec" style="flex:1;overflow-y:auto">
@@ -1573,7 +1705,8 @@
     </div>
 
     <!-- Floating icon picker (shared for category icons) -->
-    <div id="float-icon-picker" style="position:fixed;display:none;z-index:600;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.55)">
+    <div id="float-icon-picker"
+      style="position:fixed;display:none;z-index:600;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.55)">
       <div id="float-icon-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
     </div>
 
