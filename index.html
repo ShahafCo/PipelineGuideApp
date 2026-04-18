@@ -1458,7 +1458,7 @@
           </div>
           <div id="sb-foot">
             <div class="ci">🔒 <span id="cinfo">—</span></div>
-            <button class="admin-btn" id="ap-btn" style="display:none" onclick="app.admin.open()">📋 רעננות מדריכים</button>
+            <button class="admin-btn" id="ap-btn" style="display:none" onclick="app.admin.open()">📋 Guide Freshness</button>
             <button class="disc" onclick="app.disconnect()">⏏ התנתק</button>
           </div>
         </div>
@@ -1500,16 +1500,16 @@
       <div id="lp">
         <div id="lh" onclick="app.logger.toggle()">
           <div class="ldot" id="ldot"></div>
-          <span class="ltitle">יומן פלט</span>
+          <span class="ltitle">Output Log</span>
           <div class="lsp"></div>
-          <button class="lbtn" onclick="app.logger.clear(event)" title="נקה יומן">
+          <button class="lbtn" onclick="app.logger.clear(event)" title="Clear log">
             <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6l-1 14H6L5 6" />
               <path d="M10 11v6M14 11v6M9 6V4h6v2" />
             </svg>
           </button>
-          <button class="lbtn" title="הצג/הסתר">
+          <button class="lbtn" title="Toggle">
             <svg id="ltogico" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
               <polyline points="18 15 12 9 6 15" />
             </svg>
@@ -1575,7 +1575,7 @@
     <div id="ap-overlay" onclick="app.admin.overlayClick(event)">
       <div id="ap-box">
         <div id="ap-head">
-          <h2>📋 רעננות מדריכים</h2>
+          <h2>📋 Guide Freshness</h2>
           <span id="ap-stats"></span>
           <button class="ap-close" onclick="app.admin.close()">✕</button>
         </div>
@@ -1583,10 +1583,10 @@
           <table class="ap-table" id="ap-table">
             <thead>
               <tr>
-                <th onclick="app.admin.sort('title')">כותרת <span class="ap-sort-ico" id="aps-title"></span></th>
-                <th onclick="app.admin.sort('path')">נתיב <span class="ap-sort-ico" id="aps-path"></span></th>
-                <th onclick="app.admin.sort('updatedAt')">עודכן לאחרונה <span class="ap-sort-ico" id="aps-updatedAt">▼</span></th>
-                <th onclick="app.admin.sort('age')">גיל <span class="ap-sort-ico" id="aps-age"></span></th>
+                <th onclick="app.admin.sort('title')">Title <span class="ap-sort-ico" id="aps-title"></span></th>
+                <th onclick="app.admin.sort('path')">Path <span class="ap-sort-ico" id="aps-path"></span></th>
+                <th onclick="app.admin.sort('updatedAt')">Last Updated <span class="ap-sort-ico" id="aps-updatedAt">▼</span></th>
+                <th onclick="app.admin.sort('age')">Age <span class="ap-sort-ico" id="aps-age"></span></th>
               </tr>
             </thead>
             <tbody id="ap-tbody"></tbody>

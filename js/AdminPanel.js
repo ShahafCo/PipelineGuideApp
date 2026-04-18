@@ -38,7 +38,7 @@ class AdminPanel {
     const staleCount = rows.filter(r => r._age > YEAR).length;
     const warnCount  = rows.filter(r => r._age > SIX_MO && r._age <= YEAR).length;
     document.getElementById('ap-stats').textContent =
-      `${rows.length} מדריכים · ${staleCount} ישנים · ${warnCount} מזדקנים`;
+      `${rows.length} guides · ${staleCount} stale · ${warnCount} aging`;
 
     ['title','path','updatedAt','age'].forEach(k => {
       const el = document.getElementById('aps-' + (k === 'age' ? 'updatedAt' : k));
@@ -50,9 +50,9 @@ class AdminPanel {
     document.getElementById('ap-tbody').innerHTML = rows.map(r => {
       const stale = r._age > YEAR, warn = !stale && r._age > SIX_MO;
       const cls = stale ? 'ap-stale' : warn ? 'ap-warn' : '';
-      const dateStr = r._ms ? new Date(r._ms).toLocaleDateString('he-IL', { year:'numeric', month:'short', day:'numeric' }) : '—';
+      const dateStr = r._ms ? new Date(r._ms).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }) : '—';
       const ageDays = r._ms ? Math.floor(r._age / 86400000) : null;
-      let ageStr = ageDays === null ? '—' : ageDays < 30 ? `${ageDays}י` : ageDays < 365 ? `${Math.floor(ageDays/30)}ח` : `${(ageDays/365).toFixed(1)}ש`;
+      let ageStr = ageDays === null ? '—' : ageDays < 30 ? `${ageDays}d` : ageDays < 365 ? `${Math.floor(ageDays/30)}mo` : `${(ageDays/365).toFixed(1)}y`;
       const badgeCls = stale ? 'ap-age-stale' : warn ? 'ap-age-warn' : 'ap-age-ok';
       const pathDisp = r.path.replace(/\/[^/]+\.md$/, '') || 'root';
       return `<tr class="${cls}" onclick="app.admin.close();app.viewer.open('${r.path.replace(/'/g,"\\'")}');" style="cursor:pointer">

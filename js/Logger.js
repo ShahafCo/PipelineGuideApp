@@ -5,7 +5,7 @@ class Logger {
 
   add(txt, type = '') {
     const out = document.getElementById('lo');
-    const now = new Date().toLocaleTimeString('he', { hour12: false });
+    const now = new Date().toLocaleTimeString('en', { hour12: false });
     txt.split('\n').filter(l => l.trim()).forEach(l => {
       const d = document.createElement('div'); d.className = 'll';
       d.innerHTML = `<span class="lt">${now}</span><span class="lx ${type}">${esc(l)}</span>`;
