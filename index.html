@@ -914,10 +914,11 @@
         color: var(--muted);
         font-size: 10px;
         transition: transform .2s;
+        transform: scaleX(-1);
       }
 
       .step.open .sarr {
-        transform: rotate(90deg);
+        transform: scaleX(-1) rotate(90deg);
       }
 
       .sbody {
@@ -1594,7 +1595,17 @@
       </div>
     </div>
 
-    <script src="renderer.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/AppState.js"></script>
+    <script src="js/Logger.js"></script>
+    <script src="js/ApiClient.js"></script>
+    <script src="js/Navigation.js"></script>
+    <script src="js/Sidebar.js"></script>
+    <script src="js/GuideGrid.js"></script>
+    <script src="js/GuideViewer.js"></script>
+    <script src="js/GuideEditor.js"></script>
+    <script src="js/AdminPanel.js"></script>
+    <script src="js/GuideApp.js"></script>
   </body>
 
 </html>
