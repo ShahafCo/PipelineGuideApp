@@ -47,7 +47,7 @@ class GuideGrid {
         <div class="gc-cat">${esc(sub)}</div>
       </div></div>
       <div class="gc-desc">${esc(g.desc)}</div>
-      <div class="gc-tags">${g.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+      <div class="gc-tags">${g.tags.map(t => `<span class="tag" onclick="app.sidebar.selectTag('${t.replace(/'/g,"\\'")}','${t.replace(/'/g,"\\'")}');event.stopPropagation()">${esc(t)}</span>`).join('')}</div>
     </div>`;
   }
 
