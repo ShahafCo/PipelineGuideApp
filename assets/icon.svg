@@ -1,0 +1,39 @@
+<svg width="100%" viewBox="0 0 680 680" role="img" xmlns="http://www.w3.org/2000/svg" style="">
+<title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Guides application icon designed for taskbar legibility</title>
+<desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">A vibrant sunset-gradient rounded square with a bold white open book and a cyan ribbon bookmark sticking up from the spine.</desc>
+
+<defs>
+<linearGradient id="sunsetBg" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#ff9a5a"/>
+<stop offset="0.55" stop-color="#ff5a8a"/>
+<stop offset="1" stop-color="#c026d3"/>
+</linearGradient>
+<clipPath id="iconClipNew">
+<rect x="40" y="40" width="600" height="600" rx="120"/>
+</clipPath>
+</defs>
+
+<!-- Rounded-square background -->
+<rect x="40" y="40" width="600" height="600" rx="120" fill="url(#sunsetBg)"/>
+
+<g clip-path="url(#iconClipNew)">
+<!-- Soft shadow under book -->
+<ellipse cx="340" cy="495" rx="230" ry="16" fill="#000" opacity="0.22"/>
+
+<!-- Left page -->
+<path d="M 130 210 L 325 250 L 325 480 L 130 480 Z" fill="#ffffff"/>
+<!-- Right page -->
+<path d="M 550 210 L 355 250 L 355 480 L 550 480 Z" fill="#ffffff"/>
+
+<!-- Spine -->
+<path d="M 325 250 L 355 250 L 355 480 L 325 480 Z" fill="#f4e8d8"/>
+
+<!-- Cyan ribbon bookmark -->
+<path d="M 300 120 L 380 120 L 380 295 L 340 275 L 300 295 Z" fill="#06b6d4"/>
+<!-- Ribbon shadow -->
+<path d="M 340 275 L 380 295 L 380 280 L 340 260 Z" fill="#0891b2" opacity="0.5"/>
+</g>
+
+<!-- Outer highlight rim -->
+<rect x="40" y="40" width="600" height="600" rx="120" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.28"/>
+</svg>
