@@ -1,5 +1,6 @@
 {
   "name": "pipeline-guide-app",
+  "productName": "Pipeline Guide",
   "version": "1.0.0",
   "description": "Pipeline guide viewer",
   "main": "main.js",
@@ -8,5 +9,8 @@
   },
   "dependencies": {
     "electron": "^41.2.1"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5"
   }
 }

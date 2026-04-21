@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src http://*:*">
-    <title>Pipeline Guide</title>
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+    <title>מדריך Pipeline</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
     <style>
       :root {
@@ -56,6 +57,17 @@
         border-radius: 3px
       }
 
+      /* ── LTR islands (code / editor / log) ── */
+      code,
+      pre,
+      .md pre,
+      .ed,
+      #lo {
+        direction: ltr;
+        unicode-bidi: embed;
+        text-align: left;
+      }
+
       /* ── Titlebar ── */
       #tb {
         height: 38px;
@@ -79,7 +91,7 @@
       }
 
       .tb-status {
-        margin-left: 10px;
+        margin-inline-start: 10px;
         display: flex;
         align-items: center;
         gap: 5px;
@@ -333,7 +345,7 @@
         width: 238px;
         flex-shrink: 0;
         background: var(--bg2);
-        border-right: 1px solid var(--bd);
+        border-inline-end: 1px solid var(--bd);
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -378,7 +390,7 @@
       }
 
       .badge {
-        margin-left: auto;
+        margin-inline-start: auto;
         font-size: 10px;
         background: var(--bg4);
         color: var(--muted);
@@ -443,19 +455,27 @@
         transition: all .15s;
         margin-bottom: 6px;
       }
-      .admin-btn:hover { background: var(--bg3); color: var(--text); }
+
+      .admin-btn:hover {
+        background: var(--bg3);
+        color: var(--text);
+      }
 
       /* ── Admin panel ── */
       #ap-overlay {
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,.6);
+        background: rgba(0, 0, 0, .6);
         z-index: 500;
         align-items: center;
         justify-content: center;
       }
-      #ap-overlay.on { display: flex; }
+
+      #ap-overlay.on {
+        display: flex;
+      }
+
       #ap-box {
         background: var(--bg2);
         border: 1px solid var(--bd);
@@ -465,8 +485,9 @@
         max-height: 82vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 8px 32px rgba(0,0,0,.5);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
       }
+
       #ap-head {
         display: flex;
         align-items: center;
@@ -475,39 +496,131 @@
         gap: 10px;
         flex-shrink: 0;
       }
-      #ap-head h2 { flex:1; font-size:14px; color:var(--bright); font-weight:600; }
-      #ap-stats { font-size:11px; color:var(--muted); }
+
+      #ap-head h2 {
+        flex: 1;
+        font-size: 14px;
+        color: var(--bright);
+        font-weight: 600;
+      }
+
+      #ap-stats {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
       .ap-close {
-        width:26px; height:26px; border:none; background:transparent;
-        color:var(--muted); cursor:pointer; border-radius:4px; font-size:14px;
-        display:flex; align-items:center; justify-content:center;
+        width: 26px;
+        height: 26px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      .ap-close:hover { background:var(--bg3); color:var(--text); }
-      #ap-body { overflow-y:auto; flex:1; }
-      .ap-table { width:100%; border-collapse:collapse; font-size:12px; }
+
+      .ap-close:hover {
+        background: var(--bg3);
+        color: var(--text);
+      }
+
+      #ap-body {
+        overflow-y: auto;
+        flex: 1;
+      }
+
+      .ap-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
       .ap-table th {
-        text-align:left; padding:8px 14px; font-size:10px; font-weight:700;
-        text-transform:uppercase; letter-spacing:.05em; color:var(--muted);
-        border-bottom:1px solid var(--bd); position:sticky; top:0;
-        background:var(--bg2); cursor:pointer; user-select:none;
+        text-align: start;
+        padding: 8px 14px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--muted);
+        border-bottom: 1px solid var(--bd);
+        position: sticky;
+        top: 0;
+        background: var(--bg2);
+        cursor: pointer;
+        user-select: none;
       }
-      .ap-table th:hover { color:var(--text); }
-      .ap-table td { padding:8px 14px; border-bottom:1px solid var(--bd); vertical-align:middle; }
-      .ap-table tr:last-child td { border-bottom:none; }
-      .ap-table tr:hover td { background:var(--bg3); }
-      .ap-stale td { color:var(--red) !important; }
-      .ap-stale .ap-path { color:rgba(248,81,73,.7) !important; }
-      .ap-warn td { color:var(--yellow) !important; }
-      .ap-warn .ap-path { color:rgba(210,153,34,.7) !important; }
-      .ap-path { font-size:11px; color:var(--muted); }
+
+      .ap-table th:hover {
+        color: var(--text);
+      }
+
+      .ap-table td {
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--bd);
+        vertical-align: middle;
+      }
+
+      .ap-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .ap-table tr:hover td {
+        background: var(--bg3);
+      }
+
+      .ap-stale td {
+        color: var(--red) !important;
+      }
+
+      .ap-stale .ap-path {
+        color: rgba(248, 81, 73, .7) !important;
+      }
+
+      .ap-warn td {
+        color: var(--yellow) !important;
+      }
+
+      .ap-warn .ap-path {
+        color: rgba(210, 153, 34, .7) !important;
+      }
+
+      .ap-path {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
       .ap-age-badge {
-        display:inline-block; padding:2px 7px; border-radius:10px;
-        font-size:10px; font-weight:600;
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 600;
       }
-      .ap-age-stale { background:rgba(248,81,73,.15); color:var(--red); }
-      .ap-age-warn  { background:rgba(210,153,34,.15); color:var(--yellow); }
-      .ap-age-ok    { background:rgba(63,185,80,.15); color:var(--green); }
-      .ap-sort-ico  { margin-left:4px; opacity:.5; }
+
+      .ap-age-stale {
+        background: rgba(248, 81, 73, .15);
+        color: var(--red);
+      }
+
+      .ap-age-warn {
+        background: rgba(210, 153, 34, .15);
+        color: var(--yellow);
+      }
+
+      .ap-age-ok {
+        background: rgba(63, 185, 80, .15);
+        color: var(--green);
+      }
+
+      .ap-sort-ico {
+        margin-inline-start: 4px;
+        opacity: .5;
+      }
 
       /* ── Main ── */
       #main {
@@ -536,7 +649,7 @@
 
       .sw svg {
         position: absolute;
-        left: 9px;
+        inset-inline-start: 9px;
         top: 50%;
         transform: translateY(-50%);
         color: var(--muted);
@@ -549,7 +662,8 @@
         border: 1px solid var(--bd);
         border-radius: 6px;
         color: var(--text);
-        padding: 6px 10px 6px 30px;
+        padding: 6px 10px;
+        padding-inline-start: 30px;
         font-size: 12px;
         outline: none;
         font-family: inherit;
@@ -701,6 +815,12 @@
         background: var(--bg3);
         color: var(--muted);
         border: 1px solid var(--bd);
+        cursor: pointer;
+      }
+
+      .tag:hover {
+        border-color: var(--accent);
+        color: var(--accent);
       }
 
       .tag.ac {
@@ -906,15 +1026,17 @@
         color: var(--muted);
         font-size: 10px;
         transition: transform .2s;
+        transform: scaleX(-1);
       }
 
       .step.open .sarr {
-        transform: rotate(90deg);
+        transform: scaleX(-1) rotate(90deg);
       }
 
       .sbody {
         display: none;
-        padding: 14px 16px 14px 46px;
+        padding: 14px 16px;
+        padding-inline-start: 46px;
         border-top: 1px solid var(--bd);
       }
 
@@ -976,7 +1098,7 @@
 
       .md ul,
       .md ol {
-        padding-left: 20px;
+        padding-inline-start: 20px;
         margin-bottom: 9px;
       }
 
@@ -986,12 +1108,12 @@
       }
 
       .md blockquote {
-        border-left: 3px solid var(--accent);
+        border-inline-start: 3px solid var(--accent);
         padding: 6px 14px;
         margin: 9px 0;
         color: var(--muted);
         background: rgba(88, 166, 255, .06);
-        border-radius: 0 6px 6px 0;
+        border-radius: 6px;
       }
 
       .md a {
@@ -1009,7 +1131,7 @@
       .md td {
         border: 1px solid var(--bd);
         padding: 6px 11px;
-        text-align: left;
+        text-align: start;
       }
 
       .md th {
@@ -1265,13 +1387,13 @@
         background: rgba(188, 140, 255, .1);
         color: var(--purple);
         border: 1px solid rgba(188, 140, 255, .3);
-        margin-left: 6px;
+        margin-inline-start: 6px;
       }
 
       .icon-pick {
         position: absolute;
         top: 58px;
-        left: 0;
+        inset-inline-start: 0;
         z-index: 200;
         background: var(--bg2);
         border: 1px solid var(--bd);
@@ -1302,14 +1424,6 @@
         background: var(--bg3);
       }
 
-      /* ── RTL ── */
-      html[dir="rtl"] code,
-      html[dir="rtl"] pre,
-      html[dir="rtl"] .md pre {
-        direction: ltr;
-        unicode-bidi: embed;
-      }
-
       .rbtn.on {
         border-color: var(--accent);
         color: var(--accent);
@@ -1324,7 +1438,7 @@
       .tag-dd-list {
         position: absolute;
         top: calc(100% + 3px);
-        left: 0;
+        inset-inline-start: 0;
         min-width: 160px;
         max-height: 200px;
         overflow-y: auto;
@@ -1354,7 +1468,8 @@
 
       /* ── Subcategory sidebar ── */
       .sb-sub {
-        padding: 5px 14px 5px 30px;
+        padding: 5px 14px;
+        padding-inline-start: 30px;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -1373,11 +1488,37 @@
         background: rgba(88, 166, 255, .1);
         color: var(--accent);
       }
-      .sb-cat-ico { border-radius:3px; padding:1px 3px; cursor:pointer; }
-      .sb-cat-ico:hover { background:var(--bg4); outline:1px solid var(--bd); }
-      .sb-chev { margin-left:2px; color:var(--muted); font-size:11px; padding:2px 5px; border-radius:3px; transition:transform .18s; display:inline-block; cursor:pointer; }
-      .sb-chev:hover { background:var(--bg4); color:var(--text); }
-      .sb-chev.open { transform:rotate(90deg); }
+
+      .sb-cat-ico {
+        border-radius: 3px;
+        padding: 1px 3px;
+        cursor: pointer;
+      }
+
+      .sb-cat-ico:hover {
+        background: var(--bg4);
+        outline: 1px solid var(--bd);
+      }
+
+      .sb-chev {
+        margin-inline-start: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        padding: 2px 5px;
+        border-radius: 3px;
+        transition: transform .18s;
+        display: inline-block;
+        cursor: pointer;
+      }
+
+      .sb-chev:hover {
+        background: var(--bg4);
+        color: var(--text);
+      }
+
+      .sb-chev.open {
+        transform: rotate(90deg);
+      }
     </style>
   </head>
 
@@ -1389,23 +1530,23 @@
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
         </svg>
-        Pipeline Guide
+        מדריך Pipeline
       </div>
       <div class="tb-status">
-        <div class="dot" id="cd"></div><span id="cl">Disconnected</span>
+        <div class="dot" id="cd"></div><span id="cl">מנותק</span>
       </div>
       <div class="tb-sp"></div>
-      <button class="tb-btn" onclick="api.minimize()" title="Minimize">
+      <button class="tb-btn" onclick="api.minimize()" title="מזעור">
         <svg width="12" height="2" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 12 2">
           <line x1="0" y1="1" x2="12" y2="1" />
         </svg>
       </button>
-      <button class="tb-btn" onclick="api.maximize()" title="Maximize">
+      <button class="tb-btn" onclick="api.maximize()" title="הגדלה">
         <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 11 11">
           <rect x=".5" y=".5" width="10" height="10" rx="2" />
         </svg>
       </button>
-      <button class="tb-btn x" onclick="api.close()" title="Close">
+      <button class="tb-btn x" onclick="api.close()" title="סגירה">
         <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 11 11">
           <line x1="1" y1="1" x2="10" y2="10" />
           <line x1="10" y1="1" x2="1" y2="10" />
@@ -1421,22 +1562,22 @@
             <rect x="3" y="11" width="18" height="11" rx="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
-          Connect to Guide Server
+          התחבר לשרת מדריכים
         </div>
-        <div class="card-sub">Connect to your guide server</div>
+        <div class="card-sub">הזן את פרטי השרת ואישורי הכניסה</div>
 
         <div class="fr">
-          <label>Server Address &amp; Port</label>
+          <label>כתובת שרת ופורט</label>
           <div class="split">
-            <input type="text" id="fh" placeholder="hostname or IP" autocomplete="off">
+            <input type="text" id="fh" placeholder="שם מארח או IP" autocomplete="off">
             <input type="number" id="fp" value="7842" placeholder="7842">
           </div>
         </div>
-        <div class="fr"><label>Username</label><input type="text" id="fu" placeholder="username" autocomplete="off"></div>
-        <div class="fr"><label>Password</label><input type="password" id="fpass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doConnect()"></div>
+        <div class="fr"><label>שם משתמש</label><input type="text" id="fu" placeholder="שם משתמש" autocomplete="off"></div>
+        <div class="fr"><label>סיסמה</label><input type="password" id="fpass" placeholder="••••••••" onkeydown="if(event.key==='Enter')app.connect()"></div>
 
         <div id="lerr" class="err-box"></div>
-        <button class="btn-p" id="cbtn" onclick="doConnect()">Connect</button>
+        <button class="btn-p" id="cbtn" onclick="app.connect()">התחבר</button>
       </div>
     </div>
 
@@ -1445,50 +1586,49 @@
       <div id="ws">
         <div id="sb">
           <div class="sb-sec">
-            <div class="sb-lbl">Browse</div>
-            <div class="sb-item on" id="nall" onclick="navHome()">🏠 Browse<span class="badge" id="ball">0</span></div>
-            <div class="sb-item" id="nrec" onclick="setView('recent')">🕐 Recently Viewed</div>
+            <div class="sb-lbl">עיון</div>
+            <div class="sb-item on" id="nall" onclick="app.nav.home()">🏠 דף הבית<span class="badge" id="ball">0</span></div>
+            <div class="sb-item" id="nrec" onclick="app.nav.recent()">🕐 נצפו לאחרונה</div>
           </div>
           <div class="sb-sec" style="flex:1;overflow-y:auto">
-            <div class="sb-lbl">Categories</div>
+            <div class="sb-lbl">קטגוריות</div>
             <div id="cats"></div>
           </div>
           <div id="sb-foot">
             <div class="ci">🔒 <span id="cinfo">—</span></div>
-            <button class="admin-btn" id="ap-btn" style="display:none" onclick="openAdminPanel()">📋 Guide Freshness</button>
-            <button class="disc" onclick="doDisconnect()">⏏ Disconnect</button>
+            <button class="admin-btn" id="ap-btn" style="display:none" onclick="app.admin.open()">📋 Guide Freshness</button>
+            <button class="disc" onclick="app.disconnect()">⏏ התנתק</button>
           </div>
         </div>
 
         <div id="main">
           <div id="toolbar">
-            <button class="rbtn" id="back-btn" style="display:none" onclick="goBack()" title="Go back">← Back</button>
+            <button class="rbtn" id="back-btn" style="display:none" onclick="app.nav.back()" title="חזרה">חזרה ›</button>
             <div class="sw">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <input type="text" id="si" placeholder="Search all guides… (Ctrl+F)" oninput="onSearch(this.value)">
+              <input type="text" id="si" placeholder="חיפוש בכל המדריכים... (Ctrl+F)" oninput="app.onSearch(this.value)">
             </div>
             <div class="tag-dd" id="tag-dd">
-              <button class="fsel" id="tag-dd-btn" onclick="togTagDd(event)">All Tags ▾</button>
+              <button class="fsel" id="tag-dd-btn" onclick="app.sidebar.togTagDd(event)">כל התגים ▾</button>
               <div class="tag-dd-list" id="tag-dd-list"></div>
             </div>
             <div class="tb-sp2"></div>
-            <button class="rbtn" id="rtl-btn" onclick="togRTL()" title="Toggle RTL/LTR">RTL</button>
-            <button class="rbtn" id="ngb" style="display:none" onclick="openEditor('create')" title="New Guide">
+            <button class="rbtn" id="ngb" style="display:none" onclick="app.editor.open('create')" title="מדריך חדש">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              New Guide
+              מדריך חדש
             </button>
-            <button class="rbtn" id="rb" onclick="loadGuides()">
+            <button class="rbtn" id="rb" onclick="app.loadGuides()">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M23 4v6h-6M1 20v-6h6" />
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
               </svg>
-              Refresh
+              רענן
             </button>
           </div>
           <div id="ct"></div>
@@ -1496,11 +1636,11 @@
       </div>
 
       <div id="lp">
-        <div id="lh" onclick="togLog()">
+        <div id="lh" onclick="app.logger.toggle()">
           <div class="ldot" id="ldot"></div>
           <span class="ltitle">Output Log</span>
           <div class="lsp"></div>
-          <button class="lbtn" onclick="clrLog(event)" title="Clear log">
+          <button class="lbtn" onclick="app.logger.clear(event)" title="Clear log">
             <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6l-1 14H6L5 6" />
@@ -1518,11 +1658,11 @@
     </div>
 
     <!-- GUIDE EDITOR MODAL -->
-    <div class="overlay" id="ed-overlay" onclick="overlayClick(event)">
+    <div class="overlay" id="ed-overlay" onclick="app.editor.overlayClick(event)">
       <div class="modal">
         <div class="modal-hd">
-          <h3 id="em-title">New Guide</h3>
-          <button class="tb-btn" onclick="closeEditor()" title="Close">
+          <h3 id="em-title">מדריך חדש</h3>
+          <button class="tb-btn" onclick="app.editor.close()" title="סגירה">
             <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 11 11">
               <line x1="1" y1="1" x2="10" y2="10" />
               <line x1="10" y1="1" x2="1" y2="10" />
@@ -1531,15 +1671,15 @@
         </div>
         <div class="modal-body">
           <div class="fr" style="margin:0">
-            <label>Path (relative to guides dir)</label>
-            <input type="text" id="em-path" placeholder="category/sub-folder/guide.md" autocomplete="off">
+            <label>נתיב (יחסי לתיקיית מדריכים)</label>
+            <input type="text" id="em-path" placeholder="קטגוריה/תת-תיקיה/מדריך.md" autocomplete="off">
           </div>
           <div class="fr" style="margin:0; position:relative">
-            <label>Icon</label>
+            <label>אייקון</label>
             <div style="display:flex;align-items:center;gap:8px">
-              <button class="btn-s" id="em-icon-btn" onclick="toggleIconPicker(event)"
+              <button class="btn-s" id="em-icon-btn" onclick="app.editor.togIcons(event)"
                 style="font-size:20px;width:38px;height:34px;padding:0;text-align:center">📄</button>
-              <span style="font-size:11px;color:var(--muted)">Stored in frontmatter — click to change</span>
+              <span style="font-size:11px;color:var(--muted)">מאוחסן ב-frontmatter — לחץ לשינוי</span>
             </div>
             <div class="icon-pick" id="em-icon-picker">
               <div class="icon-pick-grid" id="em-icon-grid"></div>
@@ -1548,43 +1688,44 @@
           <textarea class="ed" id="em-content" placeholder="# Guide Title&#10;&#10;## Step 1: ...&#10;&#10;Description here."></textarea>
         </div>
         <div class="modal-ft">
-          <button class="btn-s" id="em-img" onclick="insertImage()" title="Upload an image and insert markdown reference">
+          <button class="btn-s" id="em-img" onclick="app.editor.insertImage()" title="העלה תמונה והכנס קישור markdown">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
-              style="display:inline;vertical-align:middle;margin-right:4px">
+              style="display:inline;vertical-align:middle;margin-inline-end:4px">
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <circle cx="8.5" cy="8.5" r="1.5" />
               <polyline points="21 15 16 10 5 21" />
             </svg>
-            Insert Image
+            הוסף תמונה
           </button>
           <div style="flex:1"></div>
-          <button class="btn-s" onclick="closeEditor()">Cancel</button>
-          <button class="btn-p" id="em-save" onclick="saveGuide()" style="width:auto;padding:8px 20px">Save</button>
+          <button class="btn-s" onclick="app.editor.close()">ביטול</button>
+          <button class="btn-p" id="em-save" onclick="app.editor.save()" style="width:auto;padding:8px 20px">שמור</button>
         </div>
       </div>
     </div>
 
     <!-- Floating icon picker (shared for category icons) -->
-    <div id="float-icon-picker" style="position:fixed;display:none;z-index:600;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.55)">
+    <div id="float-icon-picker"
+      style="position:fixed;display:none;z-index:600;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.55)">
       <div id="float-icon-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
     </div>
 
     <!-- Admin panel overlay -->
-    <div id="ap-overlay" onclick="apOverlayClick(event)">
+    <div id="ap-overlay" onclick="app.admin.overlayClick(event)">
       <div id="ap-box">
         <div id="ap-head">
           <h2>📋 Guide Freshness</h2>
           <span id="ap-stats"></span>
-          <button class="ap-close" onclick="closeAdminPanel()">✕</button>
+          <button class="ap-close" onclick="app.admin.close()">✕</button>
         </div>
         <div id="ap-body">
           <table class="ap-table" id="ap-table">
             <thead>
               <tr>
-                <th onclick="apSort('title')">Title <span class="ap-sort-ico" id="aps-title"></span></th>
-                <th onclick="apSort('path')">Path <span class="ap-sort-ico" id="aps-path"></span></th>
-                <th onclick="apSort('updatedAt')">Last Updated <span class="ap-sort-ico" id="aps-updatedAt">▼</span></th>
-                <th onclick="apSort('age')">Age <span class="ap-sort-ico" id="aps-age"></span></th>
+                <th onclick="app.admin.sort('title')">Title <span class="ap-sort-ico" id="aps-title"></span></th>
+                <th onclick="app.admin.sort('path')">Path <span class="ap-sort-ico" id="aps-path"></span></th>
+                <th onclick="app.admin.sort('updatedAt')">Last Updated <span class="ap-sort-ico" id="aps-updatedAt">▼</span></th>
+                <th onclick="app.admin.sort('age')">Age <span class="ap-sort-ico" id="aps-age"></span></th>
               </tr>
             </thead>
             <tbody id="ap-tbody"></tbody>
@@ -1593,789 +1734,17 @@
       </div>
     </div>
 
-    <script>
-      const S = {
-        host: '', apiBase: '',
-        apiToken: '', userRole: null, apiUser: null,
-        guides: [], recent: [], cur: null, done: new Set(),
-        view: 'home', cat: null, q: '', tag: '', logCol: false, rtl: false,
-        navPath: [], history: [],
-        collapsedCats: new Set(), catIcons: {}
-      };
-      try {
-        S.catIcons = JSON.parse(localStorage.getItem('pg:catIcons') || '{}');
-        JSON.parse(localStorage.getItem('pg:collapsedCats') || '[]').forEach(c => S.collapsedCats.add(c));
-      } catch {}
-
-      // ── Login helpers ──────────────────────────────────────────────────────────────
-      async function doConnect() {
-        const host = v('fh'), port = +v('fp') || 7842, user = v('fu'), pass = v('fpass');
-        if (!host || !user || !pass) return showErr('Server address, username and password are required.');
-        btnState(true);
-        S.apiBase = `http://${host}:${port}`;
-        try {
-          const lr = await fetch(`${S.apiBase}/api/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: user, password: pass })
-          });
-          const ld = await lr.json();
-          if (!lr.ok) throw new Error(ld.error || 'Login failed');
-          S.host = host; S.apiToken = ld.token; S.userRole = ld.role; S.apiUser = ld.username;
-          addLog(`Signed in as ${ld.username} (${ld.role})`, 's');
-        } catch (err) {
-          S.apiBase = ''; btnState(false);
-          return showErr(err.message);
-        }
-        btnState(false);
-        goApp();
-        await loadGuides();
-      }
-
-      function btnState(busy) {
-        const b = document.getElementById('cbtn');
-        b.disabled = busy; b.textContent = busy ? 'Connecting…' : 'Connect';
-      }
-      function showErr(m) {
-        const e = document.getElementById('lerr');
-        e.textContent = '⚠ ' + m; e.classList.add('on');
-      }
-
-      function goApp() {
-        document.getElementById('ls').classList.remove('on');
-        document.getElementById('as').classList.add('on');
-        document.getElementById('cd').classList.add('on');
-        const label = `${S.apiUser}@${S.host} (${S.userRole})`;
-        document.getElementById('cl').textContent = label;
-        document.getElementById('cinfo').textContent = label;
-        const isAdmin = S.userRole === 'admin';
-        document.getElementById('ngb').style.display = isAdmin ? '' : 'none';
-        document.getElementById('ap-btn').style.display = isAdmin ? '' : 'none';
-      }
-
-      // ── Admin panel ────────────────────────────────────────────────────────────────
-      let apSortKey = 'updatedAt', apSortAsc = true;
-
-      function openAdminPanel() {
-        document.getElementById('ap-overlay').classList.add('on');
-        renderAdminPanel();
-      }
-      function closeAdminPanel() { document.getElementById('ap-overlay').classList.remove('on'); }
-      function apOverlayClick(e) { if (e.target === document.getElementById('ap-overlay')) closeAdminPanel(); }
-
-      function apSort(key) {
-        if (apSortKey === key) apSortAsc = !apSortAsc;
-        else { apSortKey = key; apSortAsc = key === 'updatedAt'; }
-        renderAdminPanel();
-      }
-
-      function renderAdminPanel() {
-        const now = Date.now();
-        const YEAR = 365 * 24 * 3600 * 1000;
-        const SIX_MO = 183 * 24 * 3600 * 1000;
-
-        const rows = S.guides.map(g => {
-          const ms = g.updatedAt ? new Date(g.updatedAt).getTime() : 0;
-          const age = now - ms;
-          return { ...g, _ms: ms, _age: age };
-        });
-
-        rows.sort((a, b) => {
-          let va, vb;
-          if (apSortKey === 'title') { va = a.title.toLowerCase(); vb = b.title.toLowerCase(); }
-          else if (apSortKey === 'path') { va = a.path; vb = b.path; }
-          else { va = a._ms; vb = b._ms; }
-          return apSortAsc ? (va < vb ? -1 : va > vb ? 1 : 0) : (va > vb ? -1 : va < vb ? 1 : 0);
-        });
-
-        const staleCount = rows.filter(r => r._age > YEAR).length;
-        const warnCount  = rows.filter(r => r._age > SIX_MO && r._age <= YEAR).length;
-        document.getElementById('ap-stats').textContent =
-          `${rows.length} guides · ${staleCount} stale · ${warnCount} aging`;
-
-        ['title','path','updatedAt','age'].forEach(k => {
-          const el = document.getElementById('aps-' + (k === 'age' ? 'updatedAt' : k));
-          if (el) el.textContent = '';
-        });
-        const sortEl = document.getElementById('aps-' + (apSortKey === 'age' ? 'updatedAt' : apSortKey));
-        if (sortEl) sortEl.textContent = apSortAsc ? '▲' : '▼';
-
-        const tbody = document.getElementById('ap-tbody');
-        tbody.innerHTML = rows.map(r => {
-          const stale = r._age > YEAR, warn = !stale && r._age > SIX_MO;
-          const cls = stale ? 'ap-stale' : warn ? 'ap-warn' : '';
-          const dateStr = r._ms ? new Date(r._ms).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }) : '—';
-          const ageDays = r._ms ? Math.floor(r._age / 86400000) : null;
-          let ageStr = ageDays === null ? '—' : ageDays < 30 ? `${ageDays}d` : ageDays < 365 ? `${Math.floor(ageDays/30)}mo` : `${(ageDays/365).toFixed(1)}y`;
-          const badgeCls = stale ? 'ap-age-stale' : warn ? 'ap-age-warn' : 'ap-age-ok';
-          const pathDisp = r.path.replace(/\/[^/]+\.md$/, '') || 'root';
-          return `<tr class="${cls}" onclick="closeAdminPanel();openGuide('${r.path.replace(/'/g,"\\'")}');" style="cursor:pointer">
-            <td><strong>${esc(r.title)}</strong></td>
-            <td class="ap-path">${esc(pathDisp)}</td>
-            <td>${dateStr}</td>
-            <td><span class="ap-age-badge ${badgeCls}">${ageStr}</span></td>
-          </tr>`;
-        }).join('');
-      }
-
-      async function doDisconnect() {
-        if (S.apiToken) try { await apiCall('POST', '/api/logout', {}); } catch {}
-        S.guides = []; S.cur = null; S.recent = [];
-        S.apiToken = ''; S.userRole = null; S.apiUser = null; S.apiBase = '';
-        document.getElementById('as').classList.remove('on');
-        document.getElementById('ls').classList.add('on');
-        document.getElementById('cd').classList.remove('on');
-        document.getElementById('cl').textContent = 'Disconnected';
-        document.getElementById('lerr').classList.remove('on');
-        btnState(false);
-      }
-
-      // ── API helper ─────────────────────────────────────────────────────────────────
-      async function apiCall(method, endpoint, body) {
-        const opts = {
-          method,
-          headers: { 'Authorization': `Bearer ${S.apiToken}`, 'Content-Type': 'application/json' }
-        };
-        if (body !== undefined) opts.body = JSON.stringify(body);
-        const r = await fetch(`${S.apiBase}${endpoint}`, opts);
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error || r.statusText);
-        return data;
-      }
-
-      // ── Load guides ────────────────────────────────────────────────────────────────
-      async function loadGuides() {
-        const rb = document.getElementById('rb'); rb.classList.add('spin');
-        setC(ldg('Loading guides…'));
-        try {
-          const { guides } = await apiCall('GET', '/api/guides');
-          rb.classList.remove('spin');
-          S.guides = guides.map(g => ({ ...g, icon: g.frontmatter?.icon || catIcon(g.pathParts?.[0] || g.cat) }));
-          buildSidebar(); navHome();
-          addLog(`Loaded ${S.guides.length} guide(s)`, 's');
-        } catch (err) {
-          rb.classList.remove('spin');
-          setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>Load failed</h3><p>${esc(err.message)}</p></div></div>`);
-          addLog(err.message, 'e');
-        }
-      }
-
-      // ── Sidebar ────────────────────────────────────────────────────────────────────
-      function catIcon(cat) {
-        if (S.catIcons[cat]) return S.catIcons[cat];
-        const icos = { 'ci-cd': '⚙️', 'runbooks': '📖', 'troubleshooting': '🔧', 'data': '📊', 'infrastructure': '🏗️', 'security': '🔐', 'general': '📄' };
-        return icos[cat.toLowerCase()] || Object.entries(icos).find(([k]) => cat.toLowerCase().includes(k))?.[1] || '📄';
-      }
-
-      function buildSidebar() {
-        // Build recursive count tree from pathParts
-        const root = {};
-        S.guides.forEach(g => {
-          const parts = (g.pathParts && g.pathParts.length) ? g.pathParts : [g.cat || 'general'];
-          let node = root;
-          for (const part of parts) {
-            if (!node[part]) node[part] = { _count: 0, _children: {} };
-            node[part]._count++;
-            node = node[part]._children;
-          }
-        });
-        document.getElementById('ball').textContent = S.guides.length;
-        const el = document.getElementById('cats'); el.innerHTML = '';
-        renderTreeLevel(el, root, 0, '');
-      }
-
-      function renderTreeLevel(el, node, depth, parentPath) {
-        for (const [name, data] of Object.entries(node)) {
-          const fullPath = parentPath ? `${parentPath}/${name}` : name;
-          const children = Object.entries(data._children).filter(([k]) => !k.startsWith('_'));
-          const hasChildren = children.length > 0;
-          const collapsed = S.collapsedCats.has(fullPath);
-
-          const d = document.createElement('div');
-          d.className = 'sb-item';
-          d.id = 'nb-' + fullPath.replace(/\//g, '::');
-          if (depth > 0) d.style.paddingLeft = `${12 + depth * 14}px`;
-
-          if (depth === 0) {
-            const ico = document.createElement('span');
-            ico.className = 'sb-cat-ico'; ico.textContent = catIcon(name);
-            ico.title = 'Change icon';
-            ico.onclick = e => { e.stopPropagation(); pickCatIcon(name, ico); };
-            d.appendChild(ico);
-          } else {
-            const icoSpan = document.createElement('span');
-            icoSpan.textContent = hasChildren ? '📁 ' : '📄 ';
-            d.appendChild(icoSpan);
-          }
-
-          const lbl = document.createElement('span');
-          lbl.style.flex = '1'; lbl.textContent = cap(name);
-          lbl.onclick = () => navTo(fullPath);
-          d.appendChild(lbl);
-
-          const badge = document.createElement('span');
-          badge.className = 'badge'; badge.textContent = data._count;
-          d.appendChild(badge);
-
-          if (hasChildren) {
-            const chev = document.createElement('span');
-            chev.className = 'sb-chev' + (collapsed ? '' : ' open');
-            chev.id = 'chev-' + fullPath.replace(/\//g, '::');
-            chev.textContent = '›';
-            chev.onclick = e => { e.stopPropagation(); togCat(fullPath); };
-            d.appendChild(chev);
-          } else {
-            d.onclick = () => navTo(fullPath);
-          }
-          el.appendChild(d);
-
-          if (hasChildren && !collapsed) {
-            renderTreeLevel(el, data._children, depth + 1, fullPath);
-          }
-        }
-      }
-
-      function togCat(cat) {
-        S.collapsedCats.has(cat) ? S.collapsedCats.delete(cat) : S.collapsedCats.add(cat);
-        try { localStorage.setItem('pg:collapsedCats', JSON.stringify([...S.collapsedCats])); } catch {}
-        buildSidebar(); applySidebarActive();
-      }
-
-      function applySidebarActive() {
-        document.querySelectorAll('.sb-item').forEach(e => e.classList.remove('on'));
-        if (S.view === 'home')   document.getElementById('nall')?.classList.add('on');
-        else if (S.view === 'recent') document.getElementById('nrec')?.classList.add('on');
-        else if (S.navPath.length) {
-          const key = S.navPath.join('/').replace(/\//g, '::');
-          document.getElementById('nb-' + key)?.classList.add('on');
-        }
-      }
-
-      function pickCatIcon(cat, anchorEl) {
-        const picker = document.getElementById('float-icon-picker');
-        const grid   = document.getElementById('float-icon-grid');
-        grid.innerHTML = GUIDE_ICONS.map(ico =>
-          `<button style="font-size:17px;width:30px;height:30px;border:none;background:transparent;cursor:pointer;border-radius:4px" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='transparent'" onclick="selectCatIcon('${cat}','${ico}')">${ico}</button>`
-        ).join('');
-        const r = anchorEl.getBoundingClientRect();
-        picker.style.left = (r.right + 6) + 'px';
-        picker.style.top  = r.top + 'px';
-        picker.style.display = 'block';
-        setTimeout(() => document.addEventListener('click', () => { picker.style.display = 'none'; }, { once: true }), 0);
-      }
-
-      function selectCatIcon(cat, ico) {
-        S.catIcons[cat] = ico;
-        try { localStorage.setItem('pg:catIcons', JSON.stringify(S.catIcons)); } catch {}
-        document.getElementById('float-icon-picker').style.display = 'none';
-        buildSidebar(); applySidebarActive();
-      }
-      function getContextGuides() {
-        if (S.view === 'folder' && S.navPath.length) {
-          return S.guides.filter(g => {
-            const parts = (g.pathParts && g.pathParts.length) ? g.pathParts : [g.cat || 'general'];
-            return S.navPath.every((seg, i) => parts[i] === seg);
-          });
-        }
-        return S.guides;
-      }
-
-      function buildTags() {
-        const gs = (S.view === 'home' || S.view === 'recent' || S.view === 'guide') ? S.guides : getContextGuides();
-        const tags = new Set(); gs.forEach(g => g.tags.forEach(t => tags.add(t)));
-        const list = document.getElementById('tag-dd-list'); list.innerHTML = '';
-        [['', 'All Tags'], ...[...tags].sort().map(t => [t, t])].forEach(([val, label]) => {
-          const d = document.createElement('div');
-          d.className = 'tag-dd-item' + (S.tag === val ? ' on' : '');
-          d.textContent = label;
-          d.onclick = () => selectTag(val, label);
-          list.appendChild(d);
-        });
-      }
-      function togTagDd(e) {
-        e.stopPropagation();
-        const list = document.getElementById('tag-dd-list');
-        if (list.style.display === 'block') { list.style.display = 'none'; return; }
-        list.style.display = 'block';
-        setTimeout(() => document.addEventListener('click', () => { list.style.display = 'none'; }, { once: true }), 0);
-      }
-      function selectTag(val, label) {
-        S.tag = val;
-        document.getElementById('tag-dd-btn').textContent = label + ' ▾';
-        document.getElementById('tag-dd-list').style.display = 'none';
-        document.querySelectorAll('.tag-dd-item').forEach(d => d.classList.toggle('on', d.textContent === label));
-        if (S.view !== 'guide') renderGrid();
-      }
-
-      // ── Navigation ─────────────────────────────────────────────────────────────────
-      function pushHistory() {
-        S.history.push({ view: S.view, navPath: [...S.navPath], cat: S.cat, cur: S.cur });
-        updateBackBtn();
-      }
-
-      function updateBackBtn() {
-        const btn = document.getElementById('back-btn');
-        if (btn) btn.style.display = S.history.length ? '' : 'none';
-      }
-
-      function goBack() {
-        const prev = S.history.pop();
-        if (!prev) return;
-        S.view = prev.view; S.navPath = prev.navPath; S.cat = prev.cat; S.cur = prev.cur;
-        updateBackBtn();
-        applySidebarActive();
-        if (S.view !== 'guide') buildTags();
-        S.view === 'guide' ? renderViewer() : renderGrid();
-      }
-
-      function navTo(pathStr) {
-        pushHistory();
-        S.navPath = typeof pathStr === 'string' ? pathStr.split('/').filter(Boolean) : pathStr;
-        S.view = 'folder';
-        S.cat = S.navPath[0] || null;
-        applySidebarActive();
-        buildTags();
-        renderGrid();
-      }
-
-      function navHome() {
-        S.view = 'home'; S.navPath = []; S.cat = null; S.history = [];
-        updateBackBtn();
-        applySidebarActive();
-        buildTags();
-        renderGrid();
-      }
-
-      function buildBreadcrumb() {
-        if (!S.navPath.length) return '';
-        const parts = S.navPath.map((seg, i) => {
-          const p = S.navPath.slice(0, i + 1).join('/');
-          return `<a onclick="navTo('${p}')">${esc(cap(seg))}</a>`;
-        });
-        return `<div class="gnav"><a onclick="navHome()">Browse</a> › ${parts.join(' › ')}</div>`;
-      }
-
-      // ── Views ──────────────────────────────────────────────────────────────────────
-      function setView(view, cat = null, subcat = null) {
-        if (view === 'all' || view === 'home') { navHome(); return; }
-        if (view === 'category' && cat) { navTo(cat); return; }
-        if (view === 'subcat' && cat) { navTo([cat, subcat].filter(Boolean).join('/')); return; }
-        if (view === 'recent') {
-          S.view = 'recent'; S.navPath = []; S.cat = null;
-          applySidebarActive(); buildTags(); renderGrid(); return;
-        }
-        if (view === 'guide') { renderViewer(); return; }
-      }
-
-      function filtered() {
-        let gs = [...S.guides];
-        if (S.view === 'recent') {
-          gs = S.recent.map(p => gs.find(g => g.path === p)).filter(Boolean);
-        } else if (S.view === 'folder' && S.navPath.length && !S.q) {
-          gs = gs.filter(g => {
-            const parts = (g.pathParts && g.pathParts.length) ? g.pathParts : [g.cat || 'general'];
-            return S.navPath.every((seg, i) => parts[i] === seg);
-          });
-        }
-        if (S.q) {
-          const q = S.q.toLowerCase();
-          gs = gs.filter(g =>
-            g.title.toLowerCase().includes(q) ||
-            g.desc.toLowerCase().includes(q) ||
-            g.tags.some(t => t.includes(q)) ||
-            (g.pathParts || [g.cat]).some(p => p && p.toLowerCase().includes(q))
-          );
-        }
-        if (S.tag) gs = gs.filter(g => g.tags.includes(S.tag));
-        return gs;
-      }
-
-      function guideCard(g, subtitle) {
-        const p = g.path.replace(/'/g, "\\'");
-        const sub = subtitle || (g.pathParts || [g.cat]).map(s => cap(s)).join(' › ');
-        return `<div class="gc" onclick="openGuide('${p}')">
-          <div class="gc-h"><div class="gc-ico">${g.icon || '📄'}</div><div><div class="gc-title">${esc(g.title)}</div><div class="gc-cat">${esc(sub)}</div></div></div>
-          <div class="gc-desc">${esc(g.desc)}</div>
-          <div class="gc-tags">${g.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-        </div>`;
-      }
-
-      function renderHome() {
-        const topCats = {};
-        S.guides.forEach(g => {
-          const cat = (g.pathParts && g.pathParts.length) ? g.pathParts[0] : (g.cat || 'general');
-          if (!topCats[cat]) topCats[cat] = { count: 0, guides: [] };
-          topCats[cat].count++;
-          topCats[cat].guides.push(g);
-        });
-        if (!Object.keys(topCats).length) {
-          setC(`<div class="gv"><div class="es"><div class="es-i">📭</div><h3>No guides found</h3><p>Refresh or add guides to get started.</p></div></div>`);
-          return;
-        }
-        const cards = Object.entries(topCats).map(([cat, { count, guides }]) => {
-          const preview = guides.slice(0, 3).map(g => `<span class="tag">${esc(g.title)}</span>`).join('');
-          return `<div class="gc" onclick="navTo('${esc(cat)}')">
-            <div class="gc-h"><div class="gc-ico">${catIcon(cat)}</div><div><div class="gc-title">${esc(cap(cat))}</div><div class="gc-cat">${count} guide${count !== 1 ? 's' : ''}</div></div></div>
-            <div class="gc-tags">${preview}</div>
-          </div>`;
-        }).join('');
-        setC(`<div class="gv"><div class="gv-hd"><h2>Browse</h2><p>${Object.keys(topCats).length} categories · ${S.guides.length} guides</p></div><div class="gg">${cards}</div></div>`);
-      }
-
-      function renderGrid() {
-        // Global search ignores current folder
-        if (S.q) {
-          const gs = filtered();
-          const cards = gs.map(g => guideCard(g)).join('');
-          setC(`<div class="gv"><div class="gv-hd"><h2>Search Results</h2><p>${gs.length} result${gs.length !== 1 ? 's' : ''} for "${esc(S.q)}"</p></div><div class="gg">${gs.length ? cards : '<div class="es"><div class="es-i">🔍</div><h3>No results</h3></div>'}</div></div>`);
-          return;
-        }
-
-        if (S.view === 'home') { renderHome(); return; }
-
-        if (S.view === 'recent') {
-          const gs = filtered();
-          const cards = gs.map(g => guideCard(g)).join('');
-          setC(`<div class="gv"><div class="gv-hd"><h2>Recently Viewed</h2><p>${gs.length} guide${gs.length !== 1 ? 's' : ''}</p></div><div class="gg">${gs.length ? cards : '<div class="es"><div class="es-i">🕐</div><h3>No recent guides</h3><p>Open a guide to see it here.</p></div>'}</div></div>`);
-          return;
-        }
-
-        if (S.view === 'folder' && S.navPath.length) {
-          const depth = S.navPath.length;
-          const subfolders = {};
-          const directGuides = [];
-          S.guides.forEach(g => {
-            const parts = (g.pathParts && g.pathParts.length) ? g.pathParts : [g.cat || 'general'];
-            if (!S.navPath.every((seg, i) => parts[i] === seg)) return;
-            if (parts.length > depth) {
-              const sub = parts[depth];
-              if (!subfolders[sub]) subfolders[sub] = { count: 0, guides: [] };
-              subfolders[sub].count++;
-              subfolders[sub].guides.push(g);
-            } else if (parts.length === depth) {
-              directGuides.push(g);
-            }
-          });
-
-          const title = S.navPath.map(p => cap(p)).join(' › ');
-          const breadcrumb = buildBreadcrumb();
-          const tagFiltered = S.tag ? filtered() : null;
-
-          if (!S.tag && Object.keys(subfolders).length > 0) {
-            const folderCards = Object.entries(subfolders).map(([sub, { count, guides: sgs }]) => {
-              const subPath = [...S.navPath, sub].join('/');
-              const preview = sgs.slice(0, 3).map(g => `<span class="tag">${esc(g.title)}</span>`).join('');
-              return `<div class="gc" onclick="navTo('${esc(subPath)}')">
-                <div class="gc-h"><div class="gc-ico">📁</div><div><div class="gc-title">${esc(cap(sub))}</div><div class="gc-cat">${esc(title)}</div></div></div>
-                <div class="gc-desc">${count} guide${count !== 1 ? 's' : ''}</div>
-                <div class="gc-tags">${preview}</div>
-              </div>`;
-            }).join('');
-            const dirCards = directGuides.map(g => guideCard(g, title)).join('');
-            const total = Object.values(subfolders).reduce((a, b) => a + b.count, 0) + directGuides.length;
-            setC(`<div class="gv">${breadcrumb}<div class="gv-hd"><h2>${esc(title)}</h2><p>${Object.keys(subfolders).length} folder${Object.keys(subfolders).length !== 1 ? 's' : ''} · ${total} guide${total !== 1 ? 's' : ''}</p></div><div class="gg">${folderCards}${dirCards}</div></div>`);
-            return;
-          }
-
-          const gs = tagFiltered || filtered();
-          const cards = gs.map(g => guideCard(g, title)).join('');
-          setC(`<div class="gv">${breadcrumb}<div class="gv-hd"><h2>${esc(title)}</h2><p>${gs.length} guide${gs.length !== 1 ? 's' : ''}</p></div><div class="gg">${gs.length ? cards : '<div class="es"><div class="es-i">📭</div><h3>No guides here</h3></div>'}</div></div>`);
-          return;
-        }
-
-        renderHome();
-      }
-
-      // ── Open Guide ─────────────────────────────────────────────────────────────────
-      async function openGuide(path) {
-        pushHistory();
-        setC(ldg('Loading guide…'));
-        try {
-          const data = await apiCall('GET', `/api/guides/content?path=${encodeURIComponent(path)}`);
-          setC(ldg('Fetching images…'));
-          const content = await embedImages(data.content, data.path);
-          S.cur = { path: data.path, title: data.title, rawContent: data.content, content, steps: parseSteps(content), meta: data };
-          S.done = new Set();
-          S.recent = [path, ...S.recent.filter(p => p !== path)].slice(0, 10);
-          S.view = 'guide'; renderViewer();
-          addLog(`Opened: ${data.title}`, 's');
-        } catch (err) {
-          setC(`<div class="gv"><div class="es"><div class="es-i">⚠️</div><h3>Could not load</h3><p>${esc(err.message)}</p></div></div>`);
-        }
-      }
-
-      // ── Embed images ───────────────────────────────────────────────────────────────
-      async function embedImages(src, guidePath) {
-        const dir = guidePath.substring(0, guidePath.lastIndexOf('/'));
-        const re = /!\[([^\]]*)\]\(([^)"'\s]+)\)/g;
-        const hits = [...src.matchAll(re)];
-        const local = hits.filter(([, , s]) => !/^https?:\/\/|^data:|^#/.test(s));
-        if (!local.length) return src;
-        addLog(`Embedding ${local.length} image(s)…`, 's');
-        let out = src;
-        for (const [full, alt, imgSrc] of local) {
-          const imgPath = imgSrc.startsWith('/') ? imgSrc : `${dir}/${imgSrc.replace(/^\.\//, '')}`;
-          try {
-            const img = await apiCall('GET', `/api/images?path=${encodeURIComponent(imgPath)}`);
-            out = out.replace(full, `![${alt}](data:${img.mime};base64,${img.data})`);
-            addLog(`  ✓ ${img.name}`, 's');
-          } catch {
-            out = out.replace(full, `<span class="img-warn">⚠ Image not found: ${esc(imgSrc)}</span>`);
-            addLog(`  ✗ ${imgPath.split('/').pop()} — not found`, 'e');
-          }
-        }
-        return out;
-      }
-
-      // ── Render viewer ──────────────────────────────────────────────────────────────
-      function parseSteps(src) {
-        const lines = src.split('\n'); const steps = []; let cur = null, fm = false;
-        for (let i = 0; i < lines.length; i++) {
-          const l = lines[i];
-          if (i === 0 && l === '---') { fm = true; continue; }
-          if (fm && l === '---') { fm = false; continue; }
-          if (fm) continue;
-          if (/^##\s/.test(l)) {
-            if (cur) steps.push(cur);
-            cur = { title: l.replace(/^##\s+(?:step\s+\d+[:.\s-]*)?/i, '').trim(), body: [] };
-          } else if (cur) cur.body.push(l);
-        }
-        if (cur) steps.push(cur);
-        if (!steps.length) lines.filter(l => /^\d+\.\s/.test(l)).forEach(l => steps.push({ title: l.replace(/^\d+\.\s/, ''), body: [] }));
-        return steps;
-      }
-
-      function renderViewer() {
-        const g = S.cur; if (!g) { navHome(); return; }
-        const done = S.done.size, total = g.steps.length, pct = total ? Math.round(done / total * 100) : 0;
-        const tags = (g.meta.tags || []).map(t => `<span class="tag ac">${esc(t)}</span>`).join('');
-
-        const actBar = S.userRole === 'admin' ? `
-    <div class="act-bar">
-      <button class="btn-s" onclick="openEditor('edit')">✏️ Edit</button>
-      <button class="btn-danger" onclick="deleteGuide()">🗑 Delete</button>
-    </div>` : '';
-
-        let body = '';
-        if (g.steps.length) {
-          const cards = g.steps.map((s, i) => {
-            const ok = S.done.has(i);
-            return `<div class="step ${ok ? 'done' : ''}" id="s${i}">
-        <div class="step-hd" onclick="togStep(${i})">
-          <div class="chk" onclick="togDone(event,${i})">${ok ? '✓' : `<span class="snum">${i + 1}</span>`}</div>
-          <div class="stitle">${esc(s.title)}</div><span class="sarr">▶</span>
-        </div>
-        <div class="sbody"><div class="md">${marked.parse(s.body.join('\n'))}</div></div>
-      </div>`;
-          }).join('');
-          body = `${total ? `<div class="pbar-w"><div class="pbar-l"><span>${done}/${total} steps</span><span>${pct}%</span></div><div class="pbar"><div class="pfill" style="width:${pct}%"></div></div></div>` : ''}
-    <div class="steps-lbl">Steps</div>${cards}`;
-        } else {
-          body = `<div class="md">${marked.parse(g.content.replace(/^---[\s\S]*?---\n/, ''))}</div>`;
-        }
-
-        const pathParts = (g.meta.pathParts && g.meta.pathParts.length) ? g.meta.pathParts : (g.meta.cat ? [g.meta.cat] : ['general']);
-        const breadLinks = pathParts.map((seg, i) => {
-          const p = pathParts.slice(0, i + 1).join('/');
-          return `<a onclick="navTo('${p}')">${esc(cap(seg))}</a>`;
-        }).join(' › ');
-        setC(`<div class="gview">
-    <div class="gnav"><a onclick="navHome()">Browse</a> › ${breadLinks} › <span>${esc(g.title)}</span></div>
-    <h1>${esc(g.title)}</h1>
-    <div class="gmeta"><span>📁 ${esc(pathParts.map(p => cap(p)).join(' › '))}</span>${total ? `<span>📋 ${total} steps</span>` : ''} ${tags}</div>
-    ${actBar}${body}
-  </div>`);
-      }
-
-      function togStep(i) {
-        const el = document.getElementById('s' + i); if (!el) return;
-        const was = el.classList.contains('open');
-        document.querySelectorAll('.step.open').forEach(e => e.classList.remove('open'));
-        if (!was) el.classList.add('open');
-      }
-      function togDone(e, i) {
-        e.stopPropagation();
-        const wasDone = S.done.has(i);
-        wasDone ? S.done.delete(i) : S.done.add(i);
-        renderViewer();
-        if (wasDone) setTimeout(() => togStep(i), 0);
-      }
-
-      // ── Guide editor ───────────────────────────────────────────────────────────────
-      let edMode = 'create';
-
-      function openEditor(mode) {
-        edMode = mode;
-        document.getElementById('em-title').textContent = mode === 'create' ? 'New Guide' : 'Edit Guide';
-        const pathInput = document.getElementById('em-path');
-        pathInput.readOnly = mode === 'edit';
-        if (mode === 'edit' && S.cur) {
-          pathInput.value = S.cur.path;
-          document.getElementById('em-content').value = S.cur.rawContent || S.cur.content;
-        } else {
-          pathInput.value = S.cat ? `${S.cat}/new-guide/guide.md` : 'general/new-guide/guide.md';
-          document.getElementById('em-content').value =
-            '---\ntitle: \ntags: \ndescription: \n---\n\n# Guide Title\n\n## Step 1: \n\nDescription here.\n';
-        }
-        document.getElementById('em-icon-btn').textContent = getCurrentIcon(document.getElementById('em-content').value);
-        document.getElementById('ed-overlay').style.display = 'flex';
-        setTimeout(() => (mode === 'create' ? pathInput : document.getElementById('em-content')).focus(), 50);
-      }
-
-      function closeEditor() { document.getElementById('ed-overlay').style.display = 'none'; }
-      function overlayClick(e) { if (e.target === document.getElementById('ed-overlay')) closeEditor(); }
-
-      // ── Icon picker ────────────────────────────────────────────────────────────────
-      const GUIDE_ICONS = [
-        '📋', '📖', '📄', '📝', '📚', '⚙️', '🔧', '🔨', '🏗️', '🛠️', '🚀', '🔄', '🎯', '✅', '💡',
-        '⚠️', '🚨', '🔍', '📊', '📈', '🗄️', '🔐', '🔑', '🌐', '💾', '🔔', '📌', '🧩', '📡', '☁️',
-        '🎛️', '🔬', '🏛️', '🖥️', '🐛', '🔒', '🔓', '🧪', '📦', '🗂️', '🔗', '📎', '🗃️', '🖨️', '🖱️'
-      ];
-
-      function toggleIconPicker(e) {
-        e.stopPropagation();
-        const p = document.getElementById('em-icon-picker');
-        if (p.style.display === 'block') { p.style.display = 'none'; return; }
-        document.getElementById('em-icon-grid').innerHTML = GUIDE_ICONS
-          .map(ico => `<button onclick="selectIcon('${ico}')">${ico}</button>`).join('');
-        p.style.display = 'block';
-        setTimeout(() => document.addEventListener('click', () => { p.style.display = 'none'; }, { once: true }), 0);
-      }
-
-      function selectIcon(ico) {
-        document.getElementById('em-icon-btn').textContent = ico;
-        document.getElementById('em-icon-picker').style.display = 'none';
-        const ta = document.getElementById('em-content');
-        ta.value = setFrontmatterField(ta.value, 'icon', ico);
-      }
-
-      function getCurrentIcon(content) {
-        if (!content.startsWith('---')) return '📄';
-        const end = content.indexOf('\n---', 3);
-        if (end === -1) return '📄';
-        const m = content.slice(4, end).match(/^icon:\s*(.+)$/m);
-        return m ? m[1].trim() : '📄';
-      }
-
-      function setFrontmatterField(content, key, value) {
-        if (content.startsWith('---')) {
-          const end = content.indexOf('\n---', 3);
-          if (end !== -1) {
-            const body = content.slice(4, end);
-            const keyRe = new RegExp(`^${key}:.*$`, 'm');
-            const newBody = keyRe.test(body) ? body.replace(keyRe, `${key}: ${value}`) : body + `\n${key}: ${value}`;
-            return '---\n' + newBody + '\n---' + content.slice(end + 4);
-          }
-        }
-        return `---\nicon: ${value}\n---\n\n` + content;
-      }
-
-      async function insertImage() {
-        const guidePath = document.getElementById('em-path').value.trim();
-        if (!guidePath) return addLog('Set the guide path before inserting an image.', 'e');
-
-        const btn = document.getElementById('em-img');
-        btn.disabled = true;
-        try {
-          const file = await api.readImage();
-          if (!file) return;
-
-          const dir = guidePath.includes('/') ? guidePath.substring(0, guidePath.lastIndexOf('/')) : '';
-          const serverPath = dir ? `${dir}/${file.name}` : file.name;
-
-          await apiCall('POST', '/api/images', { path: serverPath, data: file.data, mime: file.mime });
-          const md = `![${file.name}](${file.name})`;
-          const ta = document.getElementById('em-content');
-          const pos = ta.selectionStart;
-          ta.value = ta.value.slice(0, pos) + md + ta.value.slice(pos);
-          ta.selectionStart = ta.selectionEnd = pos + md.length;
-          ta.focus();
-          addLog(`Uploaded: ${file.name}`, 's');
-        } catch (err) {
-          addLog(`Image upload failed: ${err.message}`, 'e');
-        } finally {
-          btn.disabled = false;
-        }
-      }
-
-      async function saveGuide() {
-        const gpath = document.getElementById('em-path').value.trim();
-        const content = document.getElementById('em-content').value;
-        if (!gpath) return addLog('Path is required', 'e');
-        if (!gpath.endsWith('.md')) return addLog('Path must end in .md', 'e');
-        if (!content) return addLog('Content is required', 'e');
-
-        const btn = document.getElementById('em-save');
-        btn.disabled = true; btn.textContent = 'Saving…';
-        try {
-          if (edMode === 'create') await apiCall('POST', '/api/guides', { path: gpath, content });
-          else await apiCall('PUT', '/api/guides', { path: gpath, content });
-          addLog(`${edMode === 'create' ? 'Created' : 'Updated'}: ${gpath}`, 's');
-          closeEditor();
-          await loadGuides();
-          if (edMode === 'edit') openGuide(gpath);
-        } catch (err) {
-          addLog(`Save failed: ${err.message}`, 'e');
-        } finally {
-          btn.disabled = false; btn.textContent = 'Save';
-        }
-      }
-
-      async function deleteGuide() {
-        if (!S.cur) return;
-        if (!confirm(`Delete "${S.cur.title}"?\nThis cannot be undone.`)) return;
-        try {
-          await apiCall('DELETE', '/api/guides', { path: S.cur.path });
-          addLog(`Deleted: ${S.cur.title}`, 's');
-          S.cur = null; await loadGuides();
-        } catch (err) {
-          addLog(`Delete failed: ${err.message}`, 'e');
-        }
-      }
-
-      // ── Search / filter ────────────────────────────────────────────────────────────
-      let stimer;
-      function onSearch(q) { clearTimeout(stimer); S.q = q; stimer = setTimeout(() => { if (S.view !== 'guide') renderGrid(); }, 200); }
-      function togRTL() {
-        S.rtl = !S.rtl;
-        document.documentElement.dir = S.rtl ? 'rtl' : 'ltr';
-        document.getElementById('rtl-btn').classList.toggle('on', S.rtl);
-      }
-
-      // ── Log panel ──────────────────────────────────────────────────────────────────
-      function addLog(txt, type = '') {
-        const out = document.getElementById('lo');
-        const now = new Date().toLocaleTimeString('en', { hour12: false });
-        txt.split('\n').filter(l => l.trim()).forEach(l => {
-          const d = document.createElement('div'); d.className = 'll';
-          d.innerHTML = `<span class="lt">${now}</span><span class="lx ${type}">${esc(l)}</span>`;
-          out.appendChild(d);
-        });
-        out.scrollTop = out.scrollHeight;
-      }
-      function togLog() {
-        S.logCol = !S.logCol;
-        document.getElementById('lp').classList.toggle('col', S.logCol);
-        document.getElementById('ltogico').setAttribute('points', S.logCol ? '6 9 12 15 18 9' : '18 15 12 9 6 15');
-      }
-      function clrLog(e) { e.stopPropagation(); document.getElementById('lo').innerHTML = ''; }
-
-      // ── Utilities ──────────────────────────────────────────────────────────────────
-      function setC(h) { document.getElementById('ct').innerHTML = h; }
-      function ldg(m) { return `<div class="es"><div class="spin2"></div><p>${m}</p></div>`; }
-      function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-      function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
-      function v(id) { return document.getElementById(id)?.value?.trim() || ''; }
-
-      document.addEventListener('keydown', e => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); document.getElementById('si')?.focus(); }
-        if (e.key === 'Escape') {
-          if (document.getElementById('ap-overlay').classList.contains('on')) { closeAdminPanel(); return; }
-          if (document.getElementById('ed-overlay').style.display === 'flex') { closeEditor(); return; }
-          if (S.view === 'guide') goBack();
-        }
-      });
-    </script>
+    <script src="js/utils.js"></script>
+    <script src="js/AppState.js"></script>
+    <script src="js/Logger.js"></script>
+    <script src="js/ApiClient.js"></script>
+    <script src="js/Navigation.js"></script>
+    <script src="js/Sidebar.js"></script>
+    <script src="js/GuideGrid.js"></script>
+    <script src="js/GuideViewer.js"></script>
+    <script src="js/GuideEditor.js"></script>
+    <script src="js/AdminPanel.js"></script>
+    <script src="js/GuideApp.js"></script>
   </body>
 
 </html>
