@@ -1364,6 +1364,34 @@
         border-color: var(--accent);
       }
 
+      .ed-area {
+        flex: 1;
+        display: flex;
+      }
+
+      .ed-area .ed {
+        width: auto;
+        flex: 1;
+      }
+
+      .ed-preview {
+        display: none;
+        overflow-y: auto;
+        padding: 10px 16px;
+        border-inline-start: 1px solid var(--bd);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .ed-area.split .ed-preview {
+        display: block;
+        flex: 1;
+      }
+
+      .modal.split {
+        width: min(1140px, 95vw);
+      }
+
       .btn-danger {
         padding: 6px 12px;
         background: rgba(248, 81, 73, .1);
@@ -1685,9 +1713,13 @@
               <div class="icon-pick-grid" id="em-icon-grid"></div>
             </div>
           </div>
-          <textarea class="ed" id="em-content" placeholder="# Guide Title&#10;&#10;## Step 1: ...&#10;&#10;Description here."></textarea>
+          <div class="ed-area" id="ed-area">
+            <textarea class="ed" id="em-content" placeholder="# Guide Title&#10;&#10;## Step 1: ...&#10;&#10;Description here."></textarea>
+            <div class="ed-preview md" id="em-preview"></div>
+          </div>
         </div>
         <div class="modal-ft">
+          <button class="btn-s" id="em-prev-btn" onclick="app.editor.togPreview()">תצוגה מקדימה</button>
           <button class="btn-s" id="em-img" onclick="app.editor.insertImage()" title="העלה תמונה והכנס קישור markdown">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
               style="display:inline;vertical-align:middle;margin-inline-end:4px">

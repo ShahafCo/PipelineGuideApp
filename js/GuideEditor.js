@@ -4,11 +4,14 @@ class GuideEditor {
 	constructor(app) {
 		this.app = app;
 		this._mode = "create";
+		this._previewOn = false;
+		this._previewHandler = null;
 	}
 
 	open(mode) {
 		const S = this.app.S;
 		this._mode = mode;
+		if (this._previewOn) this.togPreview();
 		document.getElementById("em-title").textContent = mode === "create" ? "מדריך חדש" : "עריכת מדריך";
 		const pathInput = document.getElementById("em-path");
 		pathInput.readOnly = mode === "edit";
@@ -26,6 +29,53 @@ class GuideEditor {
 
 	close() {
 		document.getElementById("ed-overlay").style.display = "none";
+	}
+
+	togPreview() {
+		this._previewOn = !this._previewOn;
+		document.querySelector("#ed-overlay .modal").classList.toggle("split", this._previewOn);
+		document.getElementById("ed-area").classList.toggle("split", this._previewOn);
+		document.getElementById("em-prev-btn").classList.toggle("on", this._previewOn);
+		if (this._previewOn) {
+			this._renderPreview();
+			this._previewHandler = () => this._renderPreview();
+			document.getElementById("em-content").addEventListener("input", this._previewHandler);
+		} else {
+			if (this._previewHandler) {
+				document.getElementById("em-content").removeEventListener("input", this._previewHandler);
+				this._previewHandler = null;
+			}
+			document.getElementById("em-preview").innerHTML = "";
+		}
+	}
+
+	_renderPreview() {
+		const raw = document.getElementById("em-content").value;
+		let body = raw;
+		if (body.startsWith("---")) {
+			const end = body.indexOf("\n---", 3);
+			if (end !== -1) body = body.slice(end + 4);
+		}
+		body = body.trim();
+		const steps = this.app.viewer._parseSteps(raw);
+		let html;
+		if (steps.length) {
+			html = steps
+				.map(
+					(s, i) => `<div class="step open">
+  <div class="step-hd">
+    <div class="chk"><span class="snum">${i + 1}</span></div>
+    <div class="stitle">${esc(s.title)}</div>
+    <span class="sarr">▶</span>
+  </div>
+  <div class="sbody"><div class="md">${marked.parse(s.body.join("\n"))}</div></div>
+</div>`,
+				)
+				.join("");
+		} else {
+			html = `<div class="md">${marked.parse(body)}</div>`;
+		}
+		document.getElementById("em-preview").innerHTML = html;
 	}
 
 	overlayClick(e) {
