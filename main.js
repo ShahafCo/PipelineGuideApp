@@ -7,7 +7,7 @@ let win;
 function createWindow() {
   win = new BrowserWindow({
     width: 1280, height: 820, minWidth: 960, minHeight: 620,
-    frame: false, backgroundColor: '#0d1117',
+    frame: false, backgroundColor: '#101216',
     icon: path.join(__dirname, 'assets/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

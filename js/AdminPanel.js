@@ -5,19 +5,17 @@ class AdminPanel {
 		this.app = app;
 		this._sortKey = "updatedAt";
 		this._sortAsc = true;
+		this._filter = "all"; // all | fresh | aging | stale
 	}
 
 	open() {
-		document.getElementById("ap-overlay").classList.add("on");
+		this._filter = "all";
+		document.getElementById("ap-dialog").showModal();
 		this.render();
 	}
 
 	close() {
-		document.getElementById("ap-overlay").classList.remove("on");
-	}
-
-	overlayClick(e) {
-		if (e.target === document.getElementById("ap-overlay")) this.close();
+		document.getElementById("ap-dialog").close();
 	}
 
 	sort(key) {
@@ -29,6 +27,11 @@ class AdminPanel {
 		this.render();
 	}
 
+	setFilter(f) {
+		this._filter = this._filter === f ? "all" : f;
+		this.render();
+	}
+
 	render() {
 		const S = this.app.S;
 		const now = Date.now();
@@ -37,8 +40,26 @@ class AdminPanel {
 
 		const rows = S.guides.map((g) => {
 			const ms = g.updatedAt ? new Date(g.updatedAt).getTime() : 0;
-			return { ...g, _ms: ms, _age: now - ms };
+			const age = now - ms;
+			const cls = !ms ? "" : age > YEAR ? "stale" : age > SIX_MO ? "aging" : "fresh";
+			return { ...g, _ms: ms, _age: age, _cls: cls };
 		});
+
+		// summary chips double as filters (aria-pressed)
+		const counts = { fresh: 0, aging: 0, stale: 0 };
+		rows.forEach((r) => {
+			if (counts[r._cls] !== undefined) counts[r._cls]++;
+		});
+		document.getElementById("ap-chips").innerHTML = [
+			["fresh", "ok", `● ${counts.fresh} עדכניים`],
+			["aging", "warn", `▲ ${counts.aging} מתיישנים`],
+			["stale", "bad", `■ ${counts.stale} לא עודכנו`],
+		]
+			.map(
+				([key, tone, label]) =>
+					`<button class="chip ${tone} ap-filter" aria-pressed="${this._filter === key}" onclick="app.admin.setFilter('${key}')">${label}</button>`,
+			)
+			.join("");
 
 		const key = this._sortKey,
 			asc = this._sortAsc;
@@ -57,35 +78,33 @@ class AdminPanel {
 			return asc ? (va < vb ? -1 : va > vb ? 1 : 0) : va > vb ? -1 : va < vb ? 1 : 0;
 		});
 
-		const staleCount = rows.filter((r) => r._age > YEAR).length;
-		const warnCount = rows.filter((r) => r._age > SIX_MO && r._age <= YEAR).length;
-		document.getElementById("ap-stats").textContent = `${rows.length} guides · ${staleCount} stale · ${warnCount} aging`;
-
+		// aria-sort on the active column header
 		["title", "path", "updatedAt", "age"].forEach((k) => {
-			const el = document.getElementById("aps-" + (k === "age" ? "updatedAt" : k));
-			if (el) el.textContent = "";
+			const th = document.getElementById("apth-" + k);
+			const ico = document.getElementById("aps-" + k);
+			if (th) {
+				if (key === k) th.setAttribute("aria-sort", asc ? "ascending" : "descending");
+				else th.removeAttribute("aria-sort");
+			}
+			if (ico) ico.textContent = key === k ? (asc ? "▲" : "▼") : "";
 		});
-		const sortEl = document.getElementById("aps-" + (key === "age" ? "updatedAt" : key));
-		if (sortEl) sortEl.textContent = asc ? "▲" : "▼";
 
-		document.getElementById("ap-tbody").innerHTML = rows
-			.map((r) => {
-				const stale = r._age > YEAR,
-					warn = !stale && r._age > SIX_MO;
-				const cls = stale ? "ap-stale" : warn ? "ap-warn" : "";
-				const dateStr = r._ms ? new Date(r._ms).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "—";
-				const ageDays = r._ms ? Math.floor(r._age / 86400000) : null;
-				let ageStr =
-					ageDays === null ? "—" : ageDays < 30 ? `${ageDays}d` : ageDays < 365 ? `${Math.floor(ageDays / 30)}mo` : `${(ageDays / 365).toFixed(1)}y`;
-				const badgeCls = stale ? "ap-age-stale" : warn ? "ap-age-warn" : "ap-age-ok";
-				const pathDisp = r.path.replace(/\/[^/]+\.md$/, "") || "root";
-				return `<tr class="${cls}" onclick="app.admin.close();app.viewer.open('${r.path.replace(/'/g, "\\'")}');" style="cursor:pointer">
-        <td><strong>${esc(r.title)}</strong></td>
-        <td class="ap-path">${esc(pathDisp)}</td>
-        <td>${dateStr}</td>
-        <td><span class="ap-age-badge ${badgeCls}">${ageStr}</span></td>
-      </tr>`;
-			})
-			.join("");
+		const visible = this._filter === "all" ? rows : rows.filter((r) => r._cls === this._filter);
+
+		document.getElementById("ap-tbody").innerHTML = visible.length
+			? visible
+					.map((r) => {
+						const stamp = freshStamp(r.updatedAt);
+						const pathDisp = r.path.replace(/\/[^/]+\.md$/, "") || "root";
+						const p = r.path.replace(/'/g, "\\'");
+						return `<tr class="${r._cls}">
+              <td><button class="ap-title-btn" onclick="app.admin.close();app.viewer.open('${p}')">${esc(r.title)}</button></td>
+              <td class="ap-path">${esc(pathDisp)}</td>
+              <td class="num">${fmtDateHe(r.updatedAt)}</td>
+              <td>${stamp.chip}</td>
+            </tr>`;
+					})
+					.join("")
+			: `<tr><td colspan="4"><div class="es" style="padding:32px"><h3>אין מדריכים בסינון זה</h3></div></td></tr>`;
 	}
 }

@@ -13,7 +13,7 @@ class Navigation {
 
 	_updateBackBtn() {
 		const btn = document.getElementById("back-btn");
-		if (btn) btn.style.display = this.app.S.history.length ? "" : "none";
+		if (btn) btn.hidden = !this.app.S.history.length;
 	}
 
 	back() {
@@ -63,13 +63,18 @@ class Navigation {
 		this.app.grid.render();
 	}
 
-	buildBreadcrumb() {
+	/* breadcrumb: semantic nav; '›' (U+203A) is Bidi_Mirrored so it flips in RTL */
+	buildBreadcrumb(currentLabel) {
 		const S = this.app.S;
-		if (!S.navPath.length) return "";
+		if (!S.navPath.length && !currentLabel) return "";
 		const parts = S.navPath.map((seg, i) => {
 			const p = S.navPath.slice(0, i + 1).join("/");
-			return `<a onclick="app.nav.to('${p}')">${esc(cap(seg))}</a>`;
+			const isLast = !currentLabel && i === S.navPath.length - 1;
+			return isLast
+				? `<span aria-current="page">${esc(cap(seg))}</span>`
+				: `<button onclick="app.nav.to('${esc(p)}')">${esc(cap(seg))}</button>`;
 		});
-		return `<div class="gnav"><a onclick="app.nav.home()">דף הבית</a> › ${parts.join(" › ")}</div>`;
+		const tail = currentLabel ? ` › <span aria-current="page">${esc(currentLabel)}</span>` : "";
+		return `<nav class="crumbs" aria-label="מיקום"><button onclick="app.nav.home()">דף הבית</button> › ${parts.join(" › ")}${tail}</nav>`;
 	}
 }

@@ -41,17 +41,71 @@ class GuideGrid {
 		return S.guides;
 	}
 
-	guideCard(g, subtitle) {
+	_tagBtns(g) {
+		return g.tags
+			.map(
+				(t) =>
+					`<button class="tagbtn${this.app.S.tag === t ? " ac" : ""}" onclick="event.stopPropagation();app.sidebar.selectTag('${t.replace(/'/g, "\\'")}','${t.replace(/'/g, "\\'")}')">${esc(t)}</button>`,
+			)
+			.join("");
+	}
+
+	/* card = article + stretched open-button; tags/progress live above the stretch layer */
+	guideCard(g, subtitle, opts = {}) {
+		const S = this.app.S;
 		const p = g.path.replace(/'/g, "\\'");
 		const sub = subtitle || (g.pathParts || [g.cat]).map((s) => cap(s)).join(" › ");
-		return `<div class="gc" onclick="app.viewer.open('${p}')">
-      <div class="gc-h"><div class="gc-ico">${g.icon || "📄"}</div><div>
-        <div class="gc-title">${esc(g.title)}</div>
-        <div class="gc-cat">${esc(sub)}</div>
-      </div></div>
-      <div class="gc-desc">${esc(g.desc)}</div>
-      <div class="gc-tags">${g.tags.map((t) => `<span class="tag" onclick="app.sidebar.selectTag('${t.replace(/'/g, "\\'")}','${t.replace(/'/g, "\\'")}');event.stopPropagation()">${esc(t)}</span>`).join("")}</div>
-    </div>`;
+		const prog = opts.prog !== undefined ? opts.prog : this.app.progress.summary(g.path);
+		let progHtml = "";
+		if (prog && prog.total > 0 && prog.done > 0) {
+			const pct = Math.round((prog.done / prog.total) * 100);
+			progHtml =
+				prog.done >= prog.total
+					? `<div class="gc-prog"><span class="chip ok">✓ הושלם</span></div>`
+					: `<div class="gc-prog"><div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="${prog.total}" aria-valuenow="${prog.done}" aria-valuetext="${prog.done} מתוך ${prog.total} שלבים"><div class="pfill" style="width:${pct}%"></div></div><span class="chip num">${prog.done}/${prog.total}</span></div>`;
+		}
+		return `<article class="gc${opts.resume ? " resume" : ""}">
+      <button class="gc-open" onclick="app.viewer.open('${p}')">
+        <span class="gc-h"><span class="gc-ico" aria-hidden="true">${g.icon || "📄"}</span><span>
+          <span class="gc-title" style="display:block">${hl(g.title, S.q)}</span>
+          <span class="gc-cat" style="display:block">${esc(sub)}</span>
+        </span></span>
+        ${g.desc ? `<span class="gc-desc">${hl(g.desc, S.q)}</span>` : ""}
+      </button>
+      ${g.tags.length ? `<div class="gc-tags">${this._tagBtns(g)}</div>` : ""}
+      ${progHtml}
+    </article>`;
+	}
+
+	folderCard(onclickPath, icon, title, subtitle, meta, preview) {
+		return `<article class="gc">
+      <button class="gc-open" onclick="app.nav.to('${esc(onclickPath)}')">
+        <span class="gc-h"><span class="gc-ico" aria-hidden="true">${icon}</span><span>
+          <span class="gc-title" style="display:block">${esc(title)}</span>
+          <span class="gc-cat" style="display:block">${esc(subtitle)}</span>
+        </span></span>
+        ${meta ? `<span class="gc-desc">${esc(meta)}</span>` : ""}
+      </button>
+      ${preview ? `<div class="gc-tags">${preview}</div>` : ""}
+    </article>`;
+	}
+
+	_emptyState(icon, title, body, actionHtml) {
+		return `<div class="es"><div class="es-i" aria-hidden="true">${icon}</div><h3>${esc(title)}</h3>${body ? `<p>${esc(body)}</p>` : ""}${actionHtml || ""}</div>`;
+	}
+
+	/* resume beacons: one-click re-entry to interrupted runbooks */
+	_resumeSection() {
+		const S = this.app.S;
+		const inProgress = this.app.progress
+			.all()
+			.filter((r) => r.done < r.total)
+			.map((r) => ({ r, g: S.guides.find((g) => g.path === r.path) }))
+			.filter((x) => x.g)
+			.slice(0, 3);
+		if (!inProgress.length) return "";
+		const cards = inProgress.map(({ r, g }) => this.guideCard(g, undefined, { resume: true, prog: r })).join("");
+		return `<h3 class="gv-sec">המשך מהמקום שעצרת</h3><div class="gg">${cards}</div><h3 class="gv-sec">קטגוריות</h3>`;
 	}
 
 	renderHome() {
@@ -64,36 +118,34 @@ class GuideGrid {
 			topCats[cat].guides.push(g);
 		});
 		if (!Object.keys(topCats).length) {
-			setC(`<div class="gv"><div class="es"><div class="es-i">📭</div><h3>לא נמצאו מדריכים</h3><p>רענן או הוסף מדריכים כדי להתחיל.</p></div></div>`);
+			setC(
+				`<div class="gv">${this._emptyState("📭", "לא נמצאו מדריכים", "רענן או הוסף מדריכים כדי להתחיל.", '<button class="btn sm outline" onclick="app.loadGuides()">רענן</button>')}</div>`,
+			);
 			return;
 		}
 		const cards = Object.entries(topCats)
 			.map(([cat, { count, guides }]) => {
 				const preview = guides
 					.slice(0, 3)
-					.map((g) => `<span class="tag">${esc(g.title)}</span>`)
+					.map((g) => `<span class="chip">${esc(g.title)}</span>`)
 					.join("");
-				return `<div class="gc" onclick="app.nav.to('${esc(cat)}')">
-        <div class="gc-h"><div class="gc-ico">${this.app.sidebar.catIcon(cat)}</div><div>
-          <div class="gc-title">${esc(cap(cat))}</div>
-          <div class="gc-cat">${count} ${count !== 1 ? "מדריכים" : "מדריך"}</div>
-        </div></div>
-        <div class="gc-tags">${preview}</div>
-      </div>`;
+				return this.folderCard(cat, this.app.sidebar.catIcon(cat), cap(cat), `${count} ${count !== 1 ? "מדריכים" : "מדריך"}`, "", preview);
 			})
 			.join("");
 		setC(
-			`<div class="gv"><div class="gv-hd"><h2>דף הבית</h2><p>${Object.keys(topCats).length} קטגוריות · ${S.guides.length} מדריכים</p></div><div class="gg">${cards}</div></div>`,
+			`<div class="gv"><div class="gv-hd"><h2>דף הבית</h2><p>${Object.keys(topCats).length} קטגוריות · ${S.guides.length} מדריכים</p></div>${this._resumeSection()}<div class="gg">${cards}</div></div>`,
 		);
 	}
 
 	render() {
 		const S = this.app.S;
+		document.getElementById("si-clear").hidden = !S.q;
 		if (S.q) {
 			const gs = this.filtered();
 			const cards = gs.map((g) => this.guideCard(g)).join("");
+			this.app.toast.announce(`${gs.length} תוצאות חיפוש`);
 			setC(
-				`<div class="gv"><div class="gv-hd"><h2>תוצאות חיפוש</h2><p>${gs.length} תוצאות עבור "${esc(S.q)}"</p></div><div class="gg">${gs.length ? cards : '<div class="es"><div class="es-i">🔍</div><h3>אין תוצאות</h3></div>'}</div></div>`,
+				`<div class="gv"><div class="gv-hd"><h2>תוצאות חיפוש</h2><p>${gs.length} תוצאות עבור "${esc(S.q)}"</p></div>${gs.length ? `<div class="gg">${cards}</div>` : this._emptyState("🔍", "אין תוצאות", "נסה מילות חיפוש אחרות.", '<button class="btn sm outline" onclick="app.clearSearch()">נקה חיפוש</button>')}</div>`,
 			);
 			return;
 		}
@@ -105,7 +157,7 @@ class GuideGrid {
 			const gs = this.filtered();
 			const cards = gs.map((g) => this.guideCard(g)).join("");
 			setC(
-				`<div class="gv"><div class="gv-hd"><h2>נצפו לאחרונה</h2><p>${gs.length} ${gs.length !== 1 ? "מדריכים" : "מדריך"}</p></div><div class="gg">${gs.length ? cards : '<div class="es"><div class="es-i">🕐</div><h3>אין מדריכים אחרונים</h3><p>פתח מדריך כדי לראותו כאן.</p></div>'}</div></div>`,
+				`<div class="gv"><div class="gv-hd"><h2>נצפו לאחרונה</h2><p>${gs.length} ${gs.length !== 1 ? "מדריכים" : "מדריך"}</p></div>${gs.length ? `<div class="gg">${cards}</div>` : this._emptyState("🕐", "אין מדריכים אחרונים", "פתח מדריך כדי לראותו כאן.")}</div>`,
 			);
 			return;
 		}
@@ -128,7 +180,9 @@ class GuideGrid {
 
 			const title = S.navPath.map((p) => cap(p)).join(" › ");
 			const breadcrumb = this.app.nav.buildBreadcrumb();
-			const tagFiltered = S.tag ? this.filtered() : null;
+			const clearTagBtn = S.tag
+				? `<button class="btn sm outline" onclick="app.sidebar.selectTag('','כל התגים')">נקה סינון תגים</button>`
+				: "";
 
 			if (!S.tag && Object.keys(subfolders).length > 0) {
 				const numFolders = Object.keys(subfolders).length;
@@ -137,16 +191,9 @@ class GuideGrid {
 						const subPath = [...S.navPath, sub].join("/");
 						const preview = sgs
 							.slice(0, 3)
-							.map((g) => `<span class="tag">${esc(g.title)}</span>`)
+							.map((g) => `<span class="chip">${esc(g.title)}</span>`)
 							.join("");
-						return `<div class="gc" onclick="app.nav.to('${esc(subPath)}')">
-            <div class="gc-h"><div class="gc-ico">📁</div><div>
-              <div class="gc-title">${esc(cap(sub))}</div>
-              <div class="gc-cat">${esc(title)}</div>
-            </div></div>
-            <div class="gc-desc">${count} ${count !== 1 ? "מדריכים" : "מדריך"}</div>
-            <div class="gc-tags">${preview}</div>
-          </div>`;
+						return this.folderCard(subPath, "📁", cap(sub), title, `${count} ${count !== 1 ? "מדריכים" : "מדריך"}`, preview);
 					})
 					.join("");
 				const dirCards = directGuides.map((g) => this.guideCard(g, title)).join("");
@@ -157,10 +204,10 @@ class GuideGrid {
 				return;
 			}
 
-			const gs = tagFiltered || this.filtered();
+			const gs = this.filtered();
 			const cards = gs.map((g) => this.guideCard(g, title)).join("");
 			setC(
-				`<div class="gv">${breadcrumb}<div class="gv-hd"><h2>${esc(title)}</h2><p>${gs.length} ${gs.length !== 1 ? "מדריכים" : "מדריך"}</p></div><div class="gg">${gs.length ? cards : '<div class="es"><div class="es-i">📭</div><h3>אין מדריכים כאן</h3></div>'}</div></div>`,
+				`<div class="gv">${breadcrumb}<div class="gv-hd"><h2>${esc(title)}</h2><p>${gs.length} ${gs.length !== 1 ? "מדריכים" : "מדריך"}</p></div>${gs.length ? `<div class="gg">${cards}</div>` : this._emptyState("📭", "אין מדריכים כאן", S.tag ? "אין מדריכים התואמים לתג שנבחר." : "", clearTagBtn)}</div>`,
 			);
 			return;
 		}
