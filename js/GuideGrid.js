@@ -55,7 +55,7 @@ class GuideGrid {
 		const S = this.app.S;
 		const p = g.path.replace(/'/g, "\\'");
 		const sub = subtitle || (g.pathParts || [g.cat]).map((s) => cap(s)).join(" › ");
-		const prog = opts.prog !== undefined ? opts.prog : this.app.progress.summary(g.path);
+		const prog = opts.prog !== undefined ? opts.prog : null;
 		let progHtml = "";
 		if (prog && prog.total > 0 && prog.done > 0) {
 			const pct = Math.round((prog.done / prog.total) * 100);
@@ -94,18 +94,9 @@ class GuideGrid {
 		return `<div class="es"><div class="es-i" aria-hidden="true">${icon}</div><h3>${esc(title)}</h3>${body ? `<p>${esc(body)}</p>` : ""}${actionHtml || ""}</div>`;
 	}
 
-	/* resume beacons: one-click re-entry to interrupted runbooks */
+	/* resume beacons removed: progress no longer persists between guide entries */
 	_resumeSection() {
-		const S = this.app.S;
-		const inProgress = this.app.progress
-			.all()
-			.filter((r) => r.done < r.total)
-			.map((r) => ({ r, g: S.guides.find((g) => g.path === r.path) }))
-			.filter((x) => x.g)
-			.slice(0, 3);
-		if (!inProgress.length) return "";
-		const cards = inProgress.map(({ r, g }) => this.guideCard(g, undefined, { resume: true, prog: r })).join("");
-		return `<h3 class="gv-sec">המשך מהמקום שעצרת</h3><div class="gg">${cards}</div><h3 class="gv-sec">קטגוריות</h3>`;
+		return "";
 	}
 
 	renderHome() {
@@ -133,7 +124,7 @@ class GuideGrid {
 			})
 			.join("");
 		setC(
-			`<div class="gv"><div class="gv-hd"><h2>דף הבית</h2><p>${Object.keys(topCats).length} קטגוריות · ${S.guides.length} מדריכים</p></div>${this._resumeSection()}<div class="gg">${cards}</div></div>`,
+			`<div class="gv"><div class="gv-hd"><h2>דף הבית</h2><p>${Object.keys(topCats).length} קטגוריות · ${S.guides.length} מדריכים</p></div><div class="gg">${cards}</div></div>`,
 		);
 	}
 
@@ -180,9 +171,7 @@ class GuideGrid {
 
 			const title = S.navPath.map((p) => cap(p)).join(" › ");
 			const breadcrumb = this.app.nav.buildBreadcrumb();
-			const clearTagBtn = S.tag
-				? `<button class="btn sm outline" onclick="app.sidebar.selectTag('','כל התגים')">נקה סינון תגים</button>`
-				: "";
+			const clearTagBtn = S.tag ? `<button class="btn sm outline" onclick="app.sidebar.selectTag('','כל התגים')">נקה סינון תגים</button>` : "";
 
 			if (!S.tag && Object.keys(subfolders).length > 0) {
 				const numFolders = Object.keys(subfolders).length;

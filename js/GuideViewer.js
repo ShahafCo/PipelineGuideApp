@@ -342,7 +342,7 @@ class GuideViewer {
 		const nowIdx = this._nowIndex();
 		if (nowIdx < 0) return;
 		this.togStep(nowIdx, true);
-		document.getElementById("s" + nowIdx)?.scrollIntoView({ block: "center" });
+		document.getElementById("s" + nowIdx)?.scrollIntoView({ block: "start" });
 	}
 
 	/* copy button on every code block — the #1 runbook action */
