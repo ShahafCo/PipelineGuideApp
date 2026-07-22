@@ -1412,35 +1412,7 @@
         position: relative;
       }
 
-      /*
-        Vertical connector (the thin line between step markers).
-        - .steps.railed::before draws the static, full-height rail line (background).
-        - When multiple steps exist we also render a dynamic `.rail-fill` element
-          (a narrow absolutely-positioned div) whose `height` is adjusted in JS
-          to show the contiguous run of completed steps from the top.
-        - The top/bottom offsets (26px) align the rail with the center of step
-          marker circles; max-height accounts for those offsets.
-      */
-      .steps.railed::before {
-        content: '';
-        position: absolute;
-        top: 26px;
-        bottom: 26px;
-        inset-inline-start: 21px;
-        width: 2px;
-        background: var(--border-subtle);
-      }
-
-      .rail-fill {
-        /* dynamic fill that grows/shrinks via inline style.height (percent) */
-        position: absolute;
-        top: 26px;
-        inset-inline-start: 21px;
-        width: 2px;
-        background: var(--success-text);
-        max-height: calc(100% - 52px);
-        transition: height var(--dur-standard) var(--ease-move);
-      }
+      /* steps rail removed — no vertical connector between step markers */
 
       .step {
         display: grid;

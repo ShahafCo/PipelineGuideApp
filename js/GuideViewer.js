@@ -157,12 +157,7 @@ class GuideViewer {
           </section>`;
 				})
 				.join("");
-			// Insert the progress rail when there are multiple steps.
-			// The static rail line is drawn by CSS (.steps.railed::before). When
-			// present we also render a dynamic `.rail-fill` element with id="rail",
-			// whose `style.height` (percentage) is updated by `_patchRail()` to
-			// visually show the contiguous run of completed steps from the top.
-			body = `${progress}${migratedNotice}<h2 class="steps-lbl">שלבים</h2><div class="steps${total > 1 ? " railed" : ""}" id="steps">${total > 1 ? '<div class="rail-fill" id="rail" style="height:0"></div>' : ""}${cards}</div>`;
+			body = `${progress}${migratedNotice}<h2 class="steps-lbl">שלבים</h2><div class="steps" id="steps">${cards}</div>`;
 		} else {
 			body = `<div class="md">${marked.parse(g.content.replace(/^---[\s\S]*?---\n/, ""))}</div>`;
 		}
@@ -194,7 +189,6 @@ class GuideViewer {
 
 		this._enhanceCodeBlocks();
 		this._setupSticky();
-		this._patchRail();
 		// open the current step so the operator lands ready to work
 		if (nowIdx >= 0) this.togStep(nowIdx, true);
 	}
@@ -235,7 +229,6 @@ class GuideViewer {
 		el?.classList.toggle("done", checked);
 		this._patchProgress();
 		this._patchNow();
-		this._patchRail();
 
 		const total = g.steps.length;
 		const done = S.done.size;
@@ -302,22 +295,7 @@ class GuideViewer {
 		}
 	}
 
-	/*
-		Update the dynamic rail fill element to reflect how many leading steps
-		(from the top) are completed. The function finds the first not-completed
-		index (prefix length) and sets the `height` of `#rail` as a percentage of
-		the total steps. This produces the vertical filled segment between the
-		step markers.
-	*/
-	_patchRail() {
-		const S = this.app.S;
-		const g = S.cur;
-		const rail = document.getElementById("rail");
-		if (!rail || !g) return;
-		let prefix = 0;
-		while (prefix < g.steps.length && S.done.has(prefix)) prefix++;
-		rail.style.height = Math.round((prefix / g.steps.length) * 100) + "%";
-	}
+	// Rail functionality removed — no dynamic vertical connector present.
 
 	resetProgress() {
 		const S = this.app.S;
@@ -336,7 +314,6 @@ class GuideViewer {
 		});
 		this._patchProgress();
 		this._patchNow();
-		this._patchRail();
 		this.app.toast.success("ההתקדמות אופסה", {
 			action: {
 				label: "בטל",
@@ -356,7 +333,6 @@ class GuideViewer {
 					});
 					this._patchProgress();
 					this._patchNow();
-					this._patchRail();
 				},
 			},
 		});
