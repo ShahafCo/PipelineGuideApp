@@ -8,7 +8,10 @@ const fs        = require('fs');
 const path      = require('path');
 const os        = require('os');
 const crypto    = require('crypto');
+const dotenv    = require('dotenv');
 const { body, query, param, validationResult } = require('express-validator');
+
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const PORT       = parseInt(process.env.PORT  || '7842', 10);

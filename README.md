@@ -18,28 +18,66 @@ Built with Electron + a lightweight Node.js REST API server. Guide content lives
 
 ## Quick Start
 
-### 1. Install app dependencies
+### Requirements
+
+- Windows 10 or later for the desktop app
+- Node.js 18 or later with npm
+
+### 1. Install dependencies
 
 ```bash
 npm install
-npm start
+cd server
+npm install
+cd ..
 ```
 
-### 2. Set up the guide server
+### 2. Create local server configuration
+
+For local development, create `server/users.json` with at least one user:
+
+```json
+[
+  { "username": "alice", "password": "yourpassword", "role": "admin" }
+]
+```
+
+You can omit `server/.env` when using the defaults. To customize the server, create it with:
+
+```dotenv
+PORT=7842
+BIND=127.0.0.1
+GUIDES_DIR=C:/Users/<you>/guides
+USERS_FILE=./users.json
+NODE_ENV=development
+```
+
+The server loads this file automatically from its own directory. `server/users.json` and `server/.env` are gitignored.
+
+### 3. Start the guide server
 
 ```bash
 cd server
-npm install
-node server.js
+npm start
 ```
 
-Create `server/users.json` and `server/.env` before starting (see below).
+For development without `users.json`, leave `NODE_ENV` unset or set it to `development`. The API then provides a temporary `dev` admin login. Production mode requires `users.json`.
 
-### 3. Connect
+### 4. Start the desktop app
+
+In a second terminal from the repository root:
+
+```bash
+npm start
+```
+
+### 5. Connect
 
 Fill in the login form:
 - **Server Address / Port** — hostname or IP of the machine running the server, default port `7842`
 - **Username / Password** — your credentials from `server/users.json`
+
+Set the server address to `127.0.0.1` when both processes run on the same computer. The server binds to localhost by default.
 
 ---
 
@@ -95,7 +133,7 @@ The folder path determines the category hierarchy — nesting is unlimited.
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `7842` | Port to listen on |
-| `BIND` | `0.0.0.0` | Bind address (`127.0.0.1` for localhost only) |
+| `BIND` | `127.0.0.1` | Documented bind address; the current server always listens on localhost |
 | `GUIDES_DIR` | `~/guides` | Path to guides directory |
 | `USERS_FILE` | `./users.json` | Path to users file |
 | `NODE_ENV` | `development` | Set to `production` to enforce auth |
@@ -111,7 +149,7 @@ The folder path determines the category hierarchy — nesting is unlimited.
 
 Roles: `admin` (full CRUD + image upload) · `viewer` (read only)
 
-> `users.json` and `.env` are gitignored — never commit them.
+> `users.json` and `.env` are gitignored — never commit them. Passwords are currently stored as plain text, so restrict access to this file.
 
 ### API
 
@@ -134,5 +172,20 @@ Roles: `admin` (full CRUD + image upload) · `viewer` (read only)
 
 - Session tokens are in-memory and expire on server restart
 - `users.json` and `.env` are gitignored
-- Set `BIND=127.0.0.1` if running the server and app on the same machine
+- The current server listens on `127.0.0.1`; the `BIND` setting is reserved for future use
+- Set `NODE_ENV=production` only after creating `server/users.json`
 - Use a reverse proxy (nginx, Caddy) with TLS if exposing over a network
+
+## Verification
+
+From the repository root, verify the installed desktop dependency:
+
+```bash
+npm exec -- electron --version
+```
+
+With the server running, verify its health endpoint:
+
+```bash
+curl http://127.0.0.1:7842/api/health
+```
